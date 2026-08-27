@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, UserCircle } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { logout } from "../../lib/api/auth";
 import { Button } from "../ui/button";
@@ -15,9 +15,14 @@ export function UserMenu() {
   }
 
   return (
-    <div className="user-menu button-row" style={{ marginTop: 0 }}>
-      <UserCircle size={22} />
-      <span>Admin</span>
+    <div className="user-menu">
+      <span className="avatar avatar-photo" aria-hidden="true">
+        VM
+      </span>
+      <span className="user-menu-copy">
+        <strong>Valery M.</strong>
+        <small>Administrateur</small>
+      </span>
       <Button
         aria-label="Deconnexion"
         onClick={handleLogout}

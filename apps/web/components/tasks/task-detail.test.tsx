@@ -1,0 +1,191 @@
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
+import type { Task, User } from "@tigilabs/types";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { TaskDetail } from "./task-detail";
+
+const router = vi.hoisted(() => ({
+  refresh: vi.fn(),
+}));
+
+const apiMocks = vi.hoisted(() => ({
+  addTaskProgress: vi.fn(),
+  completeTask: vi.fn(),
+  getTask: vi.fn(),
+  initialTask: {
+    completedAt: null,
+    description:
+      "Rediger les statuts de l'entreprise et les preparer pour la legalisation.",
+    dueDate: "2026-05-30T12:00:00.000Z",
+    groupId: "group-incorporation",
+    id: "task-statuts",
+    priority: "HIGH",
+    progress: [],
+    startDate: "2026-05-27T12:00:00.000Z",
+    status: "IN_PROGRESS",
+    title: "Preparer les statuts",
+  },
+  reopenTask: vi.fn(),
+}));
+
+const admin: User = {
+  email: "valery@tigilabs.com",
+  id: "user-admin",
+  name: "Valery M.",
+  status: "ACTIVE",
+};
+
+const task: Task = {
+  assignedTo: admin,
+  assignedToId: admin.id,
+  completedAt: null,
+  createdBy: admin,
+  createdById: admin.id,
+  description:
+    "Rediger les statuts de l'entreprise et les preparer pour la legalisation.",
+  dueDate: "2026-05-30T12:00:00.000Z",
+  group: {
+    archivedAt: null,
+    completedTasks: 0,
+    createdAt: "2026-05-20T12:00:00.000Z",
+    createdById: admin.id,
+    id: "group-incorporation",
+    name: "Immatriculation",
+    overdueTasks: 0,
+    progress: 0,
+    status: "ACTIVE",
+    tasks: [],
+    totalTasks: 1,
+  },
+  groupId: "group-incorporation",
+  history: [
+    {
+      action: "TASK_CREATED",
+      createdAt: "2026-05-27T10:00:00.000Z",
+      id: "history-1",
+      newValue: "Preparer les statuts",
+      taskId: "task-statuts",
+      user: admin,
+      userId: admin.id,
+    },
+  ],
+  id: "task-statuts",
+  priority: "HIGH",
+  progress: [
+    {
+      author: admin,
+      authorId: admin.id,
+      content: "Premiere version redigee.",
+      createdAt: "2026-05-28T12:00:00.000Z",
+      id: "progress-1",
+      taskId: "task-statuts",
+    },
+  ],
+  startDate: "2026-05-27T12:00:00.000Z",
+  status: "IN_PROGRESS",
+  title: "Preparer les statuts",
+};
+
+vi.mock("next/navigation", () => ({
+  notFound: () => {
+    throw new Error("not found");
+  },
+  useRouter: () => router,
+}));
+
+vi.mock("../../lib/api/tasks", () => ({
+  ...apiMocks,
+  mockTasks: [apiMocks.initialTask],
+}));
+
+describe("TaskDetail", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("renders the desktop detail structure with tabs, metadata and history", async () => {
+    apiMocks.getTask.mockResolvedValue(task);
+
+    render(<TaskDetail id="task-statuts" />);
+
+    expect(
+      screen.getByRole("heading", { name: "Preparer les statuts" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Details" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      await screen.findByText("Premiere version redigee."),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Immatriculation").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Valery M.").length).toBeGreaterThan(0);
+
+    const historyPanel = screen.getByRole("heading", {
+      name: "Historique",
+    }).parentElement;
+    expect(historyPanel).not.toBeNull();
+    expect(
+      within(historyPanel as HTMLElement).getByText(/Tache creee/),
+    ).toBeInTheDocument();
+  });
+
+  it("adds progress optimistically and validates empty content", async () => {
+    apiMocks.getTask.mockResolvedValue(task);
+    apiMocks.addTaskProgress.mockRejectedValue(new Error("offline"));
+
+    render(<TaskDetail id="task-statuts" />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ajouter une information" }),
+    );
+
+    expect(
+      await screen.findByText("Le contenu est obligatoire."),
+    ).toBeInTheDocument();
+
+    fireEvent.change(
+      screen.getByPlaceholderText("Ajouter une information..."),
+      {
+        target: { value: "Statuts transmis pour relecture." },
+      },
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Ajouter une information" }),
+    );
+
+    await waitFor(() => {
+      expect(apiMocks.addTaskProgress).toHaveBeenCalledWith(
+        "task-statuts",
+        "Statuts transmis pour relecture.",
+      );
+    });
+    expect(
+      screen.getByText("Statuts transmis pour relecture."),
+    ).toBeInTheDocument();
+  });
+
+  it("marks the task as completed and switches to the reopen action", async () => {
+    apiMocks.getTask.mockResolvedValue(task);
+    apiMocks.completeTask.mockResolvedValue({
+      ...task,
+      completedAt: "2026-05-30T12:00:00.000Z",
+      status: "DONE",
+    });
+
+    render(<TaskDetail id="task-statuts" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Terminer" }));
+
+    await waitFor(() => {
+      expect(apiMocks.completeTask).toHaveBeenCalledWith("task-statuts");
+    });
+    expect(screen.getByRole("button", { name: "Rouvrir" })).toBeInTheDocument();
+    expect(screen.getByText("Terminee")).toBeInTheDocument();
+  });
+});

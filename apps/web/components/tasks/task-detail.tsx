@@ -1,6 +1,13 @@
 "use client";
 
-import { CheckCircle2, RotateCcw, Send } from "lucide-react";
+import {
+  CheckCircle2,
+  MoreVertical,
+  RotateCcw,
+  Send,
+  Star,
+} from "lucide-react";
+import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -109,12 +116,116 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   return (
     <div className="task-detail-layout">
       <article className="task-detail-main">
-        <div className="task-group-header">
-          <div>
-            <h2>{task.title}</h2>
-            <p className="muted">{task.description}</p>
+        <div className="task-module-header">
+          <div className="breadcrumbs">
+            <Link href="/tasks">Groupes</Link>
+            <span>/</span>
+            <span>{task.group?.name ?? task.groupId}</span>
+            <span>/</span>
+            <span>{task.title}</span>
           </div>
-          <div className="button-row" style={{ marginTop: 0 }}>
+          <div className="task-group-header">
+            <div>
+              <h2>{task.title}</h2>
+              <div className="task-title-meta">
+                <TaskStatus status={task.status} />
+                <button
+                  aria-label="Mettre en favori"
+                  className="icon-button"
+                  type="button"
+                >
+                  <Star size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="task-header-actions">
+              <button
+                aria-label="Options de la tache"
+                className="icon-button"
+                type="button"
+              >
+                <MoreVertical size={18} />
+              </button>
+            </div>
+          </div>
+          <div className="task-tabs" role="tablist">
+            <button aria-selected="true" role="tab" type="button">
+              Details
+            </button>
+            <button aria-selected="false" role="tab" type="button">
+              Avancement
+            </button>
+            <button aria-selected="false" role="tab" type="button">
+              Historique
+            </button>
+          </div>
+        </div>
+
+        <div className="task-detail-content">
+          <div className="task-detail-meta">
+            <Info label="Groupe" value={task.group?.name ?? task.groupId} />
+            <Info
+              label="Responsable"
+              value={responsible?.name ?? "Non affecte"}
+            />
+            <div>
+              <span>Priorite</span>
+              <TaskPriority priority={task.priority} />
+            </div>
+            <Info label="Date de debut" value={formatDate(task.startDate)} />
+            <Info label="Date de fin prevue" value={formatDate(task.dueDate)} />
+            <Info
+              label="Date de fin reelle"
+              value={formatDate(task.completedAt)}
+            />
+          </div>
+
+          <section className="task-description-panel">
+            <h3>Description</h3>
+            <p>{task.description ?? "Aucune description renseignee."}</p>
+          </section>
+
+          <section className="timeline-section">
+            <h3>Avancement</h3>
+            <Timeline
+              empty="Aucune information d'avancement."
+              items={(task.progress ?? []).map((item) => ({
+                author: item.author?.name ?? "Utilisateur",
+                content: item.content,
+                date: item.createdAt,
+                id: item.id,
+              }))}
+            />
+            <form
+              className="progress-form"
+              onSubmit={handleSubmit(onAddProgress)}
+            >
+              <textarea
+                aria-invalid={errors.content ? "true" : undefined}
+                placeholder="Ajouter une information..."
+                rows={2}
+                {...register("content", {
+                  required: "Le contenu est obligatoire.",
+                  minLength: {
+                    message: "Ajoutez au moins 2 caracteres.",
+                    value: 2,
+                  },
+                })}
+              />
+              <Button
+                aria-label="Ajouter une information"
+                disabled={isSubmitting}
+                type="submit"
+              >
+                <Send size={17} />
+              </Button>
+              {errors.content ? (
+                <span className="field-error">{errors.content.message}</span>
+              ) : null}
+            </form>
+          </section>
+
+          <div className="task-detail-actions">
             {task.status === "DONE" ? (
               <Button onClick={handleReopen} type="button" variant="secondary">
                 <RotateCcw size={17} />
@@ -128,64 +239,6 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
             )}
           </div>
         </div>
-
-        <div className="task-detail-meta">
-          <Info label="Groupe" value={task.group?.name ?? task.groupId} />
-          <Info
-            label="Responsable"
-            value={responsible?.name ?? "Non affecte"}
-          />
-          <Info label="Debut" value={formatDate(task.startDate)} />
-          <Info label="Echeance" value={formatDate(task.dueDate)} />
-          <div>
-            <span>Priorite</span>
-            <TaskPriority priority={task.priority} />
-          </div>
-          <div>
-            <span>Statut</span>
-            <TaskStatus status={task.status} />
-            {task.isOverdue ? (
-              <span className="badge badge-danger">En retard</span>
-            ) : null}
-          </div>
-        </div>
-
-        <section className="timeline-section">
-          <h3>Avancement</h3>
-          <form
-            className="progress-form"
-            onSubmit={handleSubmit(onAddProgress)}
-          >
-            <textarea
-              aria-invalid={errors.content ? "true" : undefined}
-              placeholder="Ajouter une information de suivi"
-              rows={3}
-              {...register("content", {
-                required: "Le contenu est obligatoire.",
-                minLength: {
-                  message: "Ajoutez au moins 2 caracteres.",
-                  value: 2,
-                },
-              })}
-            />
-            {errors.content ? (
-              <span className="field-error">{errors.content.message}</span>
-            ) : null}
-            <Button disabled={isSubmitting} type="submit">
-              <Send size={17} />
-              Ajouter
-            </Button>
-          </form>
-          <Timeline
-            empty="Aucune information d'avancement."
-            items={(task.progress ?? []).map((item) => ({
-              author: item.author?.name ?? "Utilisateur",
-              content: item.content,
-              date: item.createdAt,
-              id: item.id,
-            }))}
-          />
-        </section>
       </article>
 
       <aside className="task-history-panel">

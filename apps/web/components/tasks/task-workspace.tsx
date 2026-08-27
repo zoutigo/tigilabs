@@ -5,7 +5,9 @@ import {
   CalendarDays,
   CheckCircle2,
   CircleAlert,
+  Columns3,
   ListFilter,
+  MoreVertical,
   Plus,
   Search,
 } from "lucide-react";
@@ -109,6 +111,9 @@ export function TaskWorkspace() {
     [allTasks, quickFilter, responsible, search, sortBy, sortOrder, status],
   );
   const overdueCount = allTasks.filter((task) => task.isOverdue).length;
+  const completionLabel = selectedGroup
+    ? `${selectedGroup.completedTasks} / ${selectedGroup.totalTasks} taches terminees`
+    : "0 / 0 tache terminee";
 
   const groupForm = useForm<GroupFormValues>({
     defaultValues: { description: "", name: "" },
@@ -298,24 +303,60 @@ export function TaskWorkspace() {
         <main className="task-main-panel">
           {selectedGroup ? (
             <>
-              <div className="task-group-header">
-                <div>
-                  <h2>{selectedGroup.name}</h2>
-                  <p className="muted">{selectedGroup.description}</p>
-                  <strong>
-                    Progression : {selectedGroup.completedTasks} /{" "}
-                    {selectedGroup.totalTasks} taches terminees -{" "}
-                    {selectedGroup.progress} %
-                  </strong>
+              <div className="task-module-header">
+                <div className="breadcrumbs">
+                  <Link href="/tasks">Groupes</Link>
+                  <span>/</span>
+                  <span>{selectedGroup.name}</span>
                 </div>
-                <Button
-                  onClick={() => handleArchiveGroup(selectedGroup.id)}
-                  type="button"
-                  variant="secondary"
-                >
-                  <Archive size={17} />
-                  Archiver
-                </Button>
+                <div className="task-group-header">
+                  <div>
+                    <span className="badge badge-success">Actif</span>
+                    <h2>{selectedGroup.name}</h2>
+                  </div>
+                  <div className="task-header-actions">
+                    <Button
+                      onClick={() =>
+                        document
+                          .getElementById("task-create-title")
+                          ?.scrollIntoView({ block: "start" })
+                      }
+                      type="button"
+                    >
+                      <Plus size={17} />
+                      Nouvelle tache
+                    </Button>
+                    <Button
+                      aria-label="Options du groupe"
+                      type="button"
+                      variant="ghost"
+                    >
+                      <MoreVertical size={18} />
+                    </Button>
+                  </div>
+                </div>
+                <div className="task-tabs" role="tablist">
+                  <button aria-selected="true" role="tab" type="button">
+                    Taches
+                  </button>
+                  <button aria-selected="false" role="tab" type="button">
+                    Informations
+                  </button>
+                  <button aria-selected="false" role="tab" type="button">
+                    Historique
+                  </button>
+                </div>
+                <div className="task-module-progress">
+                  <p className="muted">{selectedGroup.description}</p>
+                  <div>
+                    <span>Progression</span>
+                    <strong>{selectedGroup.progress}%</strong>
+                  </div>
+                  <span className="progress-track">
+                    <span style={{ width: `${selectedGroup.progress}%` }} />
+                  </span>
+                  <small>{completionLabel}</small>
+                </div>
               </div>
 
               <div className="task-filter-panel">
@@ -331,6 +372,7 @@ export function TaskWorkspace() {
                   onChange={(event) =>
                     setStatus(event.target.value as "ALL" | TaskStatus)
                   }
+                  aria-label="Filtrer par statut"
                   value={status}
                 >
                   <option value="ALL">Tous les statuts</option>
@@ -341,6 +383,7 @@ export function TaskWorkspace() {
                   ))}
                 </select>
                 <select
+                  aria-label="Filtre rapide"
                   onChange={(event) => setQuickFilter(event.target.value)}
                   value={quickFilter}
                 >
@@ -351,6 +394,7 @@ export function TaskWorkspace() {
                   <option value="urgent">Urgentes</option>
                 </select>
                 <select
+                  aria-label="Filtrer par responsable"
                   onChange={(event) => setResponsible(event.target.value)}
                   value={responsible}
                 >
@@ -363,6 +407,7 @@ export function TaskWorkspace() {
                   ))}
                 </select>
                 <select
+                  aria-label="Trier par"
                   onChange={(event) => setSortBy(event.target.value)}
                   value={sortBy}
                 >
@@ -385,6 +430,14 @@ export function TaskWorkspace() {
                   <ListFilter size={17} />
                   {sortOrder === "asc" ? "Croissant" : "Decroissant"}
                 </button>
+                <button
+                  aria-label="Archiver le groupe"
+                  className="tl-button tl-button-secondary"
+                  onClick={() => handleArchiveGroup(selectedGroup.id)}
+                  type="button"
+                >
+                  <Archive size={17} />
+                </button>
               </div>
 
               <div className="task-table-wrap">
@@ -401,60 +454,13 @@ export function TaskWorkspace() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredTasks.map((task) => {
-                      const responsibleUser = task.assignedTo ?? task.assignee;
-
-                      return (
-                        <tr key={task.id}>
-                          <td>
-                            <Link href={`/tasks/${task.id}`}>
-                              <strong>{task.title}</strong>
-                            </Link>
-                            {task.description ? (
-                              <span className="muted">{task.description}</span>
-                            ) : null}
-                          </td>
-                          <td data-label="Responsable">
-                            {responsibleUser?.name ?? "-"}
-                          </td>
-                          <td data-label="Priorite">
-                            <TaskPriorityBadge priority={task.priority} />
-                          </td>
-                          <td data-label="Debut">
-                            {formatDate(task.startDate)}
-                          </td>
-                          <td data-label="Echeance">
-                            <span
-                              className={task.isOverdue ? "text-danger" : ""}
-                            >
-                              {formatDate(task.dueDate)}
-                            </span>
-                          </td>
-                          <td data-label="Statut">
-                            <span className="status-stack">
-                              <TaskStatusBadge status={task.status} />
-                              {task.isOverdue ? (
-                                <span className="badge badge-danger">
-                                  En retard
-                                </span>
-                              ) : null}
-                            </span>
-                          </td>
-                          <td data-label="Action">
-                            {task.status !== "DONE" ? (
-                              <Button
-                                aria-label="Marquer comme terminee"
-                                onClick={() => handleCompleteTask(task)}
-                                type="button"
-                                variant="ghost"
-                              >
-                                <CheckCircle2 size={18} />
-                              </Button>
-                            ) : null}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {filteredTasks.map((task) => (
+                      <TaskRow
+                        key={task.id}
+                        onComplete={handleCompleteTask}
+                        task={task}
+                      />
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -468,7 +474,7 @@ export function TaskWorkspace() {
         </main>
 
         <aside className="task-create-panel">
-          <h3>Nouvelle tache</h3>
+          <h3 id="task-create-title">Nouvelle tache</h3>
           <form
             className="form"
             onSubmit={taskForm.handleSubmit(handleCreateTask)}
@@ -553,6 +559,65 @@ function Metric({
       <span>{label}</span>
       <strong>{value}</strong>
     </article>
+  );
+}
+
+function TaskRow({
+  onComplete,
+  task,
+}: Readonly<{ onComplete: (task: Task) => void; task: Task }>) {
+  const responsibleUser = task.assignedTo ?? task.assignee;
+
+  return (
+    <tr>
+      <td>
+        <Link href={`/tasks/${task.id}`}>
+          <strong>{task.title}</strong>
+        </Link>
+        {task.description ? (
+          <span className="muted">{task.description}</span>
+        ) : null}
+      </td>
+      <td data-label="Responsable">{responsibleUser?.name ?? "-"}</td>
+      <td data-label="Priorite">
+        <TaskPriorityBadge priority={task.priority} />
+      </td>
+      <td data-label="Debut">{formatDate(task.startDate)}</td>
+      <td data-label="Echeance">
+        <span className={task.isOverdue ? "text-danger" : ""}>
+          {formatDate(task.dueDate)}
+        </span>
+      </td>
+      <td data-label="Statut">
+        <span className="status-stack">
+          <TaskStatusBadge status={task.status} />
+          {task.isOverdue ? (
+            <span className="badge badge-danger">En retard</span>
+          ) : null}
+        </span>
+      </td>
+      <td data-label="Action">
+        <div className="task-row-actions">
+          {task.status !== "DONE" ? (
+            <Button
+              aria-label={`Marquer ${task.title} comme terminee`}
+              onClick={() => onComplete(task)}
+              type="button"
+              variant="ghost"
+            >
+              <CheckCircle2 size={18} />
+            </Button>
+          ) : null}
+          <Link
+            aria-label={`Ouvrir ${task.title}`}
+            className="icon-button"
+            href={`/tasks/${task.id}`}
+          >
+            <Columns3 size={17} />
+          </Link>
+        </div>
+      </td>
+    </tr>
   );
 }
 
