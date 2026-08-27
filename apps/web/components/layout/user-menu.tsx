@@ -15,7 +15,7 @@ export function UserMenu() {
   }
 
   return (
-    <div className="button-row" style={{ marginTop: 0 }}>
+    <div className="user-menu button-row" style={{ marginTop: 0 }}>
       <UserCircle size={22} />
       <span>Admin</span>
       <Button

@@ -1,3 +1,4 @@
+import { MobileMenu } from "./mobile-menu";
 import { UserMenu } from "./user-menu";
 
 export function Header() {
@@ -8,6 +9,7 @@ export function Header() {
         <span className="muted">Gestion Tigilabs</span>
       </div>
       <UserMenu />
+      <MobileMenu />
     </header>
   );
 }

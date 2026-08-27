@@ -414,19 +414,23 @@ export function TaskWorkspace() {
                               <span className="muted">{task.description}</span>
                             ) : null}
                           </td>
-                          <td>{responsibleUser?.name ?? "-"}</td>
-                          <td>
+                          <td data-label="Responsable">
+                            {responsibleUser?.name ?? "-"}
+                          </td>
+                          <td data-label="Priorite">
                             <TaskPriorityBadge priority={task.priority} />
                           </td>
-                          <td>{formatDate(task.startDate)}</td>
-                          <td>
+                          <td data-label="Debut">
+                            {formatDate(task.startDate)}
+                          </td>
+                          <td data-label="Echeance">
                             <span
                               className={task.isOverdue ? "text-danger" : ""}
                             >
                               {formatDate(task.dueDate)}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Statut">
                             <span className="status-stack">
                               <TaskStatusBadge status={task.status} />
                               {task.isOverdue ? (
@@ -436,7 +440,7 @@ export function TaskWorkspace() {
                               ) : null}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Action">
                             {task.status !== "DONE" ? (
                               <Button
                                 aria-label="Marquer comme terminee"

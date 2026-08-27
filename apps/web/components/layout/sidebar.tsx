@@ -1,19 +1,5 @@
-import {
-  CheckSquare,
-  LayoutDashboard,
-  Settings,
-  UserCheck,
-  Users,
-} from "lucide-react";
 import Link from "next/link";
-
-const links = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/tasks", label: "Taches", icon: CheckSquare },
-  { href: "/tasks/my", label: "Mes taches", icon: UserCheck },
-  { href: "/users", label: "Utilisateurs", icon: Users },
-  { href: "/settings", label: "Parametres", icon: Settings },
-];
+import { privateNavLinks } from "./navigation";
 
 export function Sidebar() {
   return (
@@ -22,7 +8,7 @@ export function Sidebar() {
         Tigilabs
       </Link>
       <nav aria-label="Navigation interne">
-        {links.map(({ href, label, icon: Icon }) => (
+        {privateNavLinks.map(({ href, label, icon: Icon }) => (
           <Link href={href} key={href}>
             <Icon size={18} />
             {label}
