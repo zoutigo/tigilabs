@@ -7,6 +7,6 @@ export default () => ({
     expiresIn: process.env.JWT_EXPIRES_IN ?? "1d",
   },
   http: {
-    port: Number(process.env.PORT ?? 3001),
+    port: Number(process.env.PORT ?? 3101),
   },
 });

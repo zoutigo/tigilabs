@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "build": "sh -c 'if [ -f ../../docker/.env ]; then set -a; . ../../docker/.env; set +a; elif [ -f ../../.env ]; then set -a; . ../../.env; set +a; fi; nest build'",
+    "dev": "sh -c 'if [ -f ../../docker/.env ]; then set -a; . ../../docker/.env; set +a; elif [ -f ../../.env ]; then set -a; . ../../.env; set +a; fi; PORT=3101 nest start --watch'",
     "start": "node dist/main.js",
-    "start:dev": "sh -c 'if [ -f ../../docker/.env ]; then set -a; . ../../docker/.env; set +a; elif [ -f ../../.env ]; then set -a; . ../../.env; set +a; fi; nest start --watch'",
+    "start:dev": "corepack pnpm dev",
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "jest",

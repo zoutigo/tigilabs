@@ -25,6 +25,8 @@ pnpm prisma:migrate
 pnpm dev
 ```
 
+Le site web est disponible en local sur `http://localhost:3100` et l'API sur `http://localhost:3101`.
+
 ## Scripts utiles
 
 ```bash
