@@ -4,13 +4,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@tigilabs/schemas";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { login } from "../../../lib/api/auth";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<AuthFallback title="Connexion" />}>
+      <LoginContent />
+    </Suspense>
+  );
+}
+
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
@@ -73,6 +81,19 @@ export default function LoginPage() {
             Creer un compte
           </Link>
         </p>
+      </section>
+    </main>
+  );
+}
+
+function AuthFallback({ title }: Readonly<{ title: string }>) {
+  return (
+    <main className="auth-page">
+      <Link className="brand" href="/">
+        Tigilabs
+      </Link>
+      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
+        <h1>{title}</h1>
       </section>
     </main>
   );

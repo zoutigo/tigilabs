@@ -2,11 +2,19 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { confirmEmail } from "../../../lib/api/auth";
 
 export default function ConfirmEmailPage() {
+  return (
+    <Suspense fallback={<ConfirmEmailFallback />}>
+      <ConfirmEmailContent />
+    </Suspense>
+  );
+}
+
+function ConfirmEmailContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -47,6 +55,20 @@ export default function ConfirmEmailPage() {
         <Button asChild>
           <Link href="/login">Aller a la connexion</Link>
         </Button>
+      </section>
+    </main>
+  );
+}
+
+function ConfirmEmailFallback() {
+  return (
+    <main className="auth-page">
+      <Link className="brand" href="/">
+        Tigilabs
+      </Link>
+      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
+        <h1>Confirmation email</h1>
+        <p className="muted">Confirmation en cours...</p>
       </section>
     </main>
   );

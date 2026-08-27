@@ -7,13 +7,21 @@ import {
 } from "@tigilabs/schemas";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { resetPassword } from "../../../lib/api/auth";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<ResetPasswordFallback />}>
+      <ResetPasswordContent />
+    </Suspense>
+  );
+}
+
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [formError, setFormError] = useState<string | null>(
@@ -80,6 +88,19 @@ export default function ResetPasswordPage() {
             Retour a la connexion
           </Link>
         </p>
+      </section>
+    </main>
+  );
+}
+
+function ResetPasswordFallback() {
+  return (
+    <main className="auth-page">
+      <Link className="brand" href="/">
+        Tigilabs
+      </Link>
+      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
+        <h1>Nouveau mot de passe</h1>
       </section>
     </main>
   );
