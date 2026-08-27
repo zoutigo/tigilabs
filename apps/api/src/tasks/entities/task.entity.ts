@@ -7,9 +7,12 @@ export class TaskEntity {
   description?: string | null;
   status!: TaskStatus;
   priority!: TaskPriority;
+  startDate!: Date;
   dueDate?: Date | null;
-  assigneeId?: string | null;
-  reporterId!: string;
+  completedAt?: Date | null;
+  assignedToId?: string | null;
+  createdById!: string;
+  groupId!: string;
   createdAt!: Date;
   updatedAt!: Date;
 }

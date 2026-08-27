@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsArray,
   MinLength,
 } from "class-validator";
 
@@ -36,4 +37,9 @@ export class CreateUserDto {
   @IsEnum(UserStatusDto)
   @IsOptional()
   status?: UserStatusDto;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  roles?: string[];
 }

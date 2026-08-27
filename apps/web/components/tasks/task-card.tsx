@@ -4,6 +4,8 @@ import { TaskPriority } from "./task-priority";
 import { TaskStatus } from "./task-status";
 
 export function TaskCard({ task }: Readonly<{ task: Task }>) {
+  const responsible = task.assignedTo ?? task.assignee;
+
   return (
     <article className="card task-card">
       <div>
@@ -12,13 +14,22 @@ export function TaskCard({ task }: Readonly<{ task: Task }>) {
         </Link>
         <p className="muted">{task.description}</p>
         <p className="muted">
-          Responsable : {task.assignee?.name ?? "Non affecte"}
+          Responsable : {responsible?.name ?? "Non affecte"}
+        </p>
+        <p className="muted">
+          Echeance :{" "}
+          {task.dueDate
+            ? new Date(task.dueDate).toLocaleDateString("fr-FR")
+            : "Aucune"}
         </p>
       </div>
       <div
         className="button-row"
         style={{ justifyContent: "flex-end", marginTop: 0 }}
       >
+        {task.isOverdue ? (
+          <span className="badge badge-danger">En retard</span>
+        ) : null}
         <TaskStatus status={task.status} />
         <TaskPriority priority={task.priority} />
       </div>

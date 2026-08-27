@@ -4,12 +4,6 @@ export const appConfig = {
   apiPath: "/api",
 } as const;
 
-export const taskStatuses = [
-  "TODO",
-  "IN_PROGRESS",
-  "REVIEW",
-  "DONE",
-  "ARCHIVED",
-] as const;
+export const taskStatuses = ["TODO", "IN_PROGRESS", "BLOCKED", "DONE"] as const;
 
 export const taskPriorities = ["LOW", "MEDIUM", "HIGH", "URGENT"] as const;

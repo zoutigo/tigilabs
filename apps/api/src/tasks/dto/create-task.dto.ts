@@ -4,6 +4,9 @@ import { TaskStatus } from "../enums/task-status.enum";
 
 export class CreateTaskDto {
   @IsString()
+  groupId!: string;
+
+  @IsString()
   title!: string;
 
   @IsString()
@@ -20,12 +23,13 @@ export class CreateTaskDto {
 
   @IsDateString()
   @IsOptional()
+  startDate?: string;
+
+  @IsDateString()
+  @IsOptional()
   dueDate?: string;
 
   @IsString()
   @IsOptional()
-  assigneeId?: string;
-
-  @IsString()
-  reporterId!: string;
+  assignedToId?: string | null;
 }

@@ -1,9 +1,16 @@
-import { CheckSquare, LayoutDashboard, Settings, Users } from "lucide-react";
+import {
+  CheckSquare,
+  LayoutDashboard,
+  Settings,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tasks", label: "Taches", icon: CheckSquare },
+  { href: "/tasks/my", label: "Mes taches", icon: UserCheck },
   { href: "/users", label: "Utilisateurs", icon: Users },
   { href: "/settings", label: "Parametres", icon: Settings },
 ];

@@ -2,7 +2,7 @@ import type { TaskPriority as TaskPriorityType } from "@tigilabs/types";
 
 const labels: Record<TaskPriorityType, string> = {
   LOW: "Basse",
-  MEDIUM: "Moyenne",
+  MEDIUM: "Normale",
   HIGH: "Haute",
   URGENT: "Urgente",
 };

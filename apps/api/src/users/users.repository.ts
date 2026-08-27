@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
 import { PrismaService } from "../database/prisma.service";
 import { CreateUserDto } from "./dto/create-user.dto";
@@ -13,7 +14,11 @@ const publicUserSelection = {
   status: true,
   createdAt: true,
   updatedAt: true,
-  roles: { include: { role: true } },
+  roles: {
+    include: {
+      role: { include: { permissions: { include: { permission: true } } } },
+    },
+  },
 };
 
 @Injectable()
@@ -37,28 +42,80 @@ export class UsersRepository {
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
-      include: { roles: { include: { role: true } } },
+      include: {
+        roles: {
+          include: {
+            role: {
+              include: { permissions: { include: { permission: true } } },
+            },
+          },
+        },
+      },
     });
   }
 
   async create(dto: CreateUserDto) {
-    const { password, ...data } = dto;
+    const { password, roles, ...data } = dto;
     const passwordHash = await bcrypt.hash(password, 12);
 
-    return this.prisma.user.create({
-      data: {
-        ...data,
-        passwordHash,
-      },
-      select: publicUserSelection,
+    return this.prisma.$transaction(async (prisma) => {
+      const user = await prisma.user.create({
+        data: {
+          ...data,
+          passwordHash,
+        },
+        select: { id: true },
+      });
+
+      await this.replaceRoles(prisma, user.id, roles);
+
+      return prisma.user.findUniqueOrThrow({
+        where: { id: user.id },
+        select: publicUserSelection,
+      });
     });
   }
 
   update(id: string, dto: UpdateUserDto) {
-    return this.prisma.user.update({
-      where: { id },
-      data: dto,
-      select: publicUserSelection,
+    const { roles, ...data } = dto;
+
+    return this.prisma.$transaction(async (prisma) => {
+      await prisma.user.update({
+        where: { id },
+        data,
+        select: { id: true },
+      });
+
+      await this.replaceRoles(prisma, id, roles);
+
+      return prisma.user.findUniqueOrThrow({
+        where: { id },
+        select: publicUserSelection,
+      });
     });
+  }
+
+  private async replaceRoles(
+    prisma: Prisma.TransactionClient,
+    userId: string,
+    roles?: string[],
+  ) {
+    if (!roles) {
+      return;
+    }
+
+    const roleRows = await prisma.role.findMany({
+      where: { name: { in: roles } },
+      select: { id: true },
+    });
+
+    await prisma.userRole.deleteMany({ where: { userId } });
+
+    if (roleRows.length) {
+      await prisma.userRole.createMany({
+        data: roleRows.map((role) => ({ roleId: role.id, userId })),
+        skipDuplicates: true,
+      });
+    }
   }
 }

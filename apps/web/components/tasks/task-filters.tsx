@@ -12,7 +12,7 @@ export function TaskFilters() {
         <option value="ALL">Tous les statuts</option>
         <option value="TODO">A faire</option>
         <option value="IN_PROGRESS">En cours</option>
-        <option value="REVIEW">Revue</option>
+        <option value="BLOCKED">Bloquees</option>
         <option value="DONE">Terminees</option>
       </select>
     </div>

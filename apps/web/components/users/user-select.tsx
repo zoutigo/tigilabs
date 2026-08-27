@@ -5,7 +5,7 @@ type UserSelectProps = {
   name?: string;
 };
 
-export function UserSelect({ users, name = "assigneeId" }: UserSelectProps) {
+export function UserSelect({ users, name = "assignedToId" }: UserSelectProps) {
   return (
     <select name={name}>
       <option value="">Non affecte</option>

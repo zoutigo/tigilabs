@@ -5,12 +5,16 @@ export const userStatusSchema = z.enum(["ACTIVE", "INVITED", "DISABLED"]);
 export const taskStatusSchema = z.enum([
   "TODO",
   "IN_PROGRESS",
-  "REVIEW",
+  "BLOCKED",
   "DONE",
-  "ARCHIVED",
 ]);
 
 export const taskPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
+export const taskGroupStatusSchema = z.enum([
+  "ACTIVE",
+  "COMPLETED",
+  "ARCHIVED",
+]);
 
 export const loginSchema = z.object({
   email: z.string().email("Email invalide."),
@@ -56,19 +60,34 @@ export const createUserSchema = z.object({
   name: z.string().min(2),
   password: z.string().min(8),
   status: userStatusSchema.optional(),
+  roles: z.array(z.string()).optional(),
 });
 
 export const createTaskSchema = z.object({
+  groupId: z.string().min(1),
   title: z.string().min(2),
   description: z.string().optional(),
   status: taskStatusSchema.optional(),
   priority: taskPrioritySchema.optional(),
+  startDate: z.string().datetime().optional(),
   dueDate: z.string().datetime().optional(),
-  assigneeId: z.string().optional(),
-  reporterId: z.string(),
+  assignedToId: z.string().nullable().optional(),
 });
 
 export const updateTaskSchema = createTaskSchema.partial();
+
+export const createTaskGroupSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().optional(),
+});
+
+export const updateTaskGroupSchema = createTaskGroupSchema
+  .extend({ status: taskGroupStatusSchema.optional() })
+  .partial();
+
+export const createTaskProgressSchema = z.object({
+  content: z.string().min(2),
+});
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
@@ -77,3 +96,6 @@ export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+export type CreateTaskGroupInput = z.infer<typeof createTaskGroupSchema>;
+export type UpdateTaskGroupInput = z.infer<typeof updateTaskGroupSchema>;
+export type CreateTaskProgressInput = z.infer<typeof createTaskProgressSchema>;

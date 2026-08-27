@@ -2,10 +2,9 @@ import { IsDateString, IsEnum, IsOptional, IsString } from "class-validator";
 import { TaskPriority } from "../enums/task-priority.enum";
 import { TaskStatus } from "../enums/task-status.enum";
 
-export class UpdateTaskDto {
+export class CreateTaskInGroupDto {
   @IsString()
-  @IsOptional()
-  title?: string;
+  title!: string;
 
   @IsString()
   @IsOptional()

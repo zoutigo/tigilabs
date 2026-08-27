@@ -1,7 +1,4 @@
-import { TaskFilters } from "../../../components/tasks/task-filters";
-import { TaskForm } from "../../../components/tasks/task-form";
-import { TaskList } from "../../../components/tasks/task-list";
-import { mockTasks } from "../../../lib/api/tasks";
+import { TaskWorkspace } from "../../../components/tasks/task-workspace";
 
 export default function TasksPage() {
   return (
@@ -14,11 +11,7 @@ export default function TasksPage() {
           </p>
         </div>
       </div>
-      <TaskFilters />
-      <div className="grid" style={{ alignItems: "start", marginTop: 20 }}>
-        <TaskList tasks={mockTasks} />
-        <TaskForm />
-      </div>
+      <TaskWorkspace />
     </>
   );
 }

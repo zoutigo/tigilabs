@@ -1,5 +1,4 @@
-import { UserCard } from "../../../components/users/user-card";
-import { mockUsers } from "../../../lib/api/users";
+import { UsersManagement } from "../../../components/users/users-management";
 
 export default function UsersPage() {
   return (
@@ -12,11 +11,7 @@ export default function UsersPage() {
           </p>
         </div>
       </div>
-      <div className="grid">
-        {mockUsers.map((user) => (
-          <UserCard key={user.id} user={user} />
-        ))}
-      </div>
+      <UsersManagement />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { TaskCard } from "./task-card";
 
 const task: Task = {
   id: "task-1",
+  groupId: "group-1",
   title: "Structurer la roadmap",
   description: "Prioriser les prochains modules.",
   status: "IN_PROGRESS",

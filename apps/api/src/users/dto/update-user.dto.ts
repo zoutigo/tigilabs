@@ -1,4 +1,10 @@
-import { IsEmail, IsEnum, IsOptional, IsString } from "class-validator";
+import {
+  IsArray,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from "class-validator";
 import { UserStatusDto } from "./create-user.dto";
 
 export class UpdateUserDto {
@@ -13,4 +19,9 @@ export class UpdateUserDto {
   @IsEnum(UserStatusDto)
   @IsOptional()
   status?: UserStatusDto;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  roles?: string[];
 }
