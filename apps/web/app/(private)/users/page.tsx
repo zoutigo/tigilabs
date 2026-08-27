@@ -7,7 +7,9 @@ export default function UsersPage() {
       <div className="toolbar">
         <div>
           <h2>Utilisateurs</h2>
-          <p className="muted">Gestion des comptes, rôles et responsabilités.</p>
+          <p className="muted">
+            Gestion des comptes, rôles et responsabilités.
+          </p>
         </div>
       </div>
       <div className="grid">

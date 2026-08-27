@@ -20,8 +20,9 @@ export default function HomePage() {
         <div>
           <h1>Tigilabs</h1>
           <p>
-            Nous concevons des plateformes numériques robustes pour les organisations qui veulent
-            structurer leurs opérations, exploiter leurs données et livrer des services fiables.
+            Nous concevons des plateformes numériques robustes pour les
+            organisations qui veulent structurer leurs opérations, exploiter
+            leurs données et livrer des services fiables.
           </p>
           <div className="button-row">
             <Button asChild>
@@ -32,7 +33,10 @@ export default function HomePage() {
             </Button>
           </div>
         </div>
-        <div className="hero-visual" aria-label="Synthese des activites Tigilabs">
+        <div
+          className="hero-visual"
+          aria-label="Synthese des activites Tigilabs"
+        >
           <div className="signal-row">
             <strong>Produits SaaS</strong>
             <span className="badge badge-success">Actif</span>
@@ -52,15 +56,21 @@ export default function HomePage() {
         <div className="grid">
           <article className="card">
             <h3>Conseil et cadrage</h3>
-            <p className="muted">Architecture, priorisation produit et trajectoire technique.</p>
+            <p className="muted">
+              Architecture, priorisation produit et trajectoire technique.
+            </p>
           </article>
           <article className="card">
             <h3>Plateformes web</h3>
-            <p className="muted">Applications web modernes, backends API et intégrations métier.</p>
+            <p className="muted">
+              Applications web modernes, backends API et intégrations métier.
+            </p>
           </article>
           <article className="card">
             <h3>Produits numériques</h3>
-            <p className="muted">Solutions évolutives pour l'éducation, la gestion et les services.</p>
+            <p className="muted">
+              Solutions évolutives pour l'éducation, la gestion et les services.
+            </p>
           </article>
         </div>
       </section>

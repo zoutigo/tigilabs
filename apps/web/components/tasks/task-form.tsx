@@ -8,7 +8,11 @@ export function TaskForm() {
       <Input label="Titre" name="title" placeholder="Titre de la tache" />
       <label className="form">
         <span>Description</span>
-        <textarea name="description" rows={4} placeholder="Contexte et resultat attendu" />
+        <textarea
+          name="description"
+          rows={4}
+          placeholder="Contexte et resultat attendu"
+        />
       </label>
       <label className="form">
         <span>Priorite</span>

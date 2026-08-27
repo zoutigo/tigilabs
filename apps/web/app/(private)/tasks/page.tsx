@@ -9,7 +9,9 @@ export default function TasksPage() {
       <div className="toolbar">
         <div>
           <h2>Taches</h2>
-          <p className="muted">Créer, affecter, prioriser et suivre le travail de l'équipe.</p>
+          <p className="muted">
+            Créer, affecter, prioriser et suivre le travail de l'équipe.
+          </p>
         </div>
       </div>
       <TaskFilters />

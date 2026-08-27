@@ -5,11 +5,12 @@ const labels: Record<TaskStatusType, string> = {
   IN_PROGRESS: "En cours",
   REVIEW: "Revue",
   DONE: "Terminee",
-  ARCHIVED: "Archivee"
+  ARCHIVED: "Archivee",
 };
 
 export function TaskStatus({ status }: Readonly<{ status: TaskStatusType }>) {
-  const className = status === "DONE" ? "badge badge-success" : "badge badge-neutral";
+  const className =
+    status === "DONE" ? "badge badge-success" : "badge badge-neutral";
 
   return <span className={className}>{labels[status]}</span>;
 }

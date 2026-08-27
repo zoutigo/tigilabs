@@ -1,7 +1,9 @@
 import { Header } from "../../components/layout/header";
 import { Sidebar } from "../../components/layout/sidebar";
 
-export default function PrivateLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function PrivateLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className="private-shell">
       <Sidebar />

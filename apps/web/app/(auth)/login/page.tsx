@@ -11,8 +11,18 @@ export default function LoginPage() {
       <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
         <h1>Connexion</h1>
         <form className="form">
-          <Input label="Email" name="email" placeholder="vous@tigilabs.com" type="email" />
-          <Input label="Mot de passe" name="password" placeholder="Mot de passe" type="password" />
+          <Input
+            label="Email"
+            name="email"
+            placeholder="vous@tigilabs.com"
+            type="email"
+          />
+          <Input
+            label="Mot de passe"
+            name="password"
+            placeholder="Mot de passe"
+            type="password"
+          />
           <Button type="submit">Se connecter</Button>
         </form>
         <p>

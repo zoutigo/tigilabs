@@ -18,7 +18,10 @@ Monorepo pour le site public Tigilabs, l'espace privé de gestion interne et l'A
 corepack enable
 pnpm install
 cp .env.example .env
+cp docker/.env.example docker/.env
+docker compose --env-file docker/.env -f docker/docker-compose.dev.yml up -d postgres
 pnpm prisma:generate
+pnpm prisma:migrate
 pnpm dev
 ```
 
@@ -31,6 +34,7 @@ pnpm build
 pnpm typecheck
 pnpm lint
 pnpm prisma:migrate
+pnpm prisma:studio
 ```
 
 ## Vision produit

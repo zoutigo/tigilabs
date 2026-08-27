@@ -8,7 +8,7 @@ import { LoginDto } from "./dto/login.dto";
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly usersService: UsersService
+    private readonly usersService: UsersService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -18,7 +18,10 @@ export class AuthService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    const isValidPassword = await bcrypt.compare(dto.password, user.passwordHash);
+    const isValidPassword = await bcrypt.compare(
+      dto.password,
+      user.passwordHash,
+    );
 
     if (!isValidPassword) {
       throw new UnauthorizedException("Invalid credentials");
@@ -29,14 +32,16 @@ export class AuthService {
 
     return {
       accessToken: await this.jwtService.signAsync(payload),
-      refreshToken: await this.jwtService.signAsync(payload, { expiresIn: "7d" }),
+      refreshToken: await this.jwtService.signAsync(payload, {
+        expiresIn: "7d",
+      }),
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
         status: user.status,
-        roles
-      }
+        roles,
+      },
     };
   }
 
@@ -46,8 +51,8 @@ export class AuthService {
       accessToken: await this.jwtService.signAsync({
         sub: payload.sub,
         email: payload.email,
-        roles: payload.roles ?? []
-      })
+        roles: payload.roles ?? [],
+      }),
     };
   }
 }

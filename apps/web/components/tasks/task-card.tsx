@@ -11,9 +11,14 @@ export function TaskCard({ task }: Readonly<{ task: Task }>) {
           <h3>{task.title}</h3>
         </Link>
         <p className="muted">{task.description}</p>
-        <p className="muted">Responsable : {task.assignee?.name ?? "Non affecte"}</p>
+        <p className="muted">
+          Responsable : {task.assignee?.name ?? "Non affecte"}
+        </p>
       </div>
-      <div className="button-row" style={{ justifyContent: "flex-end", marginTop: 0 }}>
+      <div
+        className="button-row"
+        style={{ justifyContent: "flex-end", marginTop: 0 }}
+      >
         <TaskStatus status={task.status} />
         <TaskPriority priority={task.priority} />
       </div>

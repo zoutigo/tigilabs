@@ -8,7 +8,9 @@ export function useUsers() {
   const [users, setUsers] = useState<User[]>(mockUsers);
 
   useEffect(() => {
-    getUsers().then(setUsers).catch(() => setUsers(mockUsers));
+    getUsers()
+      .then(setUsers)
+      .catch(() => setUsers(mockUsers));
   }, []);
 
   return { users };

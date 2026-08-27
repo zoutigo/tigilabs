@@ -14,10 +14,10 @@ import { UsersModule } from "./users/users.module";
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath: [".env", "../../.env"],
+      envFilePath: [".env", "../../docker/.env", "../../.env"],
       isGlobal: true,
       load: [configuration],
-      validate: validateEnv
+      validate: validateEnv,
     }),
     DatabaseModule,
     AuthModule,
@@ -26,7 +26,7 @@ import { UsersModule } from "./users/users.module";
     TasksModule,
     CommentsModule,
     NotificationsModule,
-    AuditModule
-  ]
+    AuditModule,
+  ],
 })
 export class AppModule {}

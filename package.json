@@ -4,19 +4,32 @@
   "private": true,
   "packageManager": "pnpm@9.15.0",
   "scripts": {
-    "dev": "pnpm --parallel --filter @tigilabs/web --filter @tigilabs/api dev",
-    "dev:web": "pnpm --filter @tigilabs/web dev",
-    "dev:api": "pnpm --filter @tigilabs/api start:dev",
-    "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
-    "typecheck": "pnpm -r typecheck",
+    "dev": "corepack pnpm --parallel --filter @tigilabs/web --filter @tigilabs/api dev",
+    "dev:web": "corepack pnpm --filter @tigilabs/web dev",
+    "dev:api": "corepack pnpm --filter @tigilabs/api start:dev",
+    "build": "corepack pnpm -r build",
+    "lint": "corepack pnpm -r lint",
+    "typecheck": "corepack pnpm -r typecheck",
+    "test": "corepack pnpm -r --if-present test",
+    "test:api": "corepack pnpm --filter @tigilabs/api test",
+    "test:web": "corepack pnpm --filter @tigilabs/web test",
     "format": "prettier --write .",
-    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
-    "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma"
+    "format:check": "prettier --check .",
+    "check:repo": "corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test",
+    "prisma:generate": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma generate --schema prisma/schema.prisma \"$@\"' --",
+    "prisma:migrate": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma migrate dev --schema prisma/schema.prisma \"$@\"' --",
+    "prisma:migrate:deploy": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma migrate deploy --schema prisma/schema.prisma \"$@\"' --",
+    "prisma:studio": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma studio --schema prisma/schema.prisma \"$@\"' --"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.18.0",
+    "@typescript-eslint/parser": "^8.18.0",
+    "eslint": "^9.16.0",
     "prettier": "^3.3.3",
     "prisma": "^5.22.0",
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0"
   }
 }

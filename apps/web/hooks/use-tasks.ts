@@ -8,7 +8,9 @@ export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
 
   useEffect(() => {
-    getTasks().then(setTasks).catch(() => setTasks(mockTasks));
+    getTasks()
+      .then(setTasks)
+      .catch(() => setTasks(mockTasks));
   }, []);
 
   return { tasks };

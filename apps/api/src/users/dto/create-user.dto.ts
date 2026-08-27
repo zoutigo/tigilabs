@@ -1,9 +1,15 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from "class-validator";
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MinLength,
+} from "class-validator";
 
 export const UserStatusDto = {
   ACTIVE: "ACTIVE",
   INVITED: "INVITED",
-  DISABLED: "DISABLED"
+  DISABLED: "DISABLED",
 } as const;
 
 export type UserStatusDto = (typeof UserStatusDto)[keyof typeof UserStatusDto];

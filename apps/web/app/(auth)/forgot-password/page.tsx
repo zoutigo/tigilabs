@@ -10,9 +10,16 @@ export default function ForgotPasswordPage() {
       </Link>
       <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
         <h1>Reinitialisation</h1>
-        <p className="muted">Recevez un lien de réinitialisation sur votre adresse professionnelle.</p>
+        <p className="muted">
+          Recevez un lien de réinitialisation sur votre adresse professionnelle.
+        </p>
         <form className="form">
-          <Input label="Email" name="email" placeholder="vous@tigilabs.com" type="email" />
+          <Input
+            label="Email"
+            name="email"
+            placeholder="vous@tigilabs.com"
+            type="email"
+          />
           <Button type="submit">Envoyer le lien</Button>
         </form>
       </section>

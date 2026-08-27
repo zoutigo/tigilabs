@@ -13,11 +13,15 @@ export default function DashboardPage() {
       <div className="grid">
         <article className="card">
           <h3>Taches ouvertes</h3>
-          <strong>{mockTasks.filter((task) => task.status !== "DONE").length}</strong>
+          <strong>
+            {mockTasks.filter((task) => task.status !== "DONE").length}
+          </strong>
         </article>
         <article className="card">
           <h3>Urgences</h3>
-          <strong>{mockTasks.filter((task) => task.priority === "URGENT").length}</strong>
+          <strong>
+            {mockTasks.filter((task) => task.priority === "URGENT").length}
+          </strong>
         </article>
         <article className="card">
           <h3>Utilisateurs actifs</h3>

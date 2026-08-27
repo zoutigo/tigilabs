@@ -1,12 +1,15 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-export async function apiClient<T>(path: string, init?: RequestInit): Promise<T> {
+export async function apiClient<T>(
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      ...init?.headers
-    }
+      ...init?.headers,
+    },
   });
 
   if (!response.ok) {

@@ -9,7 +9,7 @@ export class CommentsService {
     return this.prisma.comment.findMany({
       where: { taskId },
       include: { user: true },
-      orderBy: { createdAt: "asc" }
+      orderBy: { createdAt: "asc" },
     });
   }
 
@@ -18,8 +18,8 @@ export class CommentsService {
       data: {
         taskId,
         content: data.content,
-        userId: data.userId
-      }
+        userId: data.userId,
+      },
     });
   }
 }

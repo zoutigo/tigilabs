@@ -22,13 +22,23 @@ export function Modal({ title, open, children, onClose }: ModalProps) {
         inset: 0,
         padding: 24,
         position: "fixed",
-        zIndex: 20
+        zIndex: 20,
       }}
     >
-      <section className="card" role="dialog" aria-modal="true" aria-label={title}>
+      <section
+        className="card"
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
         <div className="toolbar">
           <h2>{title}</h2>
-          <Button aria-label="Fermer" onClick={onClose} type="button" variant="ghost">
+          <Button
+            aria-label="Fermer"
+            onClick={onClose}
+            type="button"
+            variant="ghost"
+          >
             <X size={18} />
           </Button>
         </div>

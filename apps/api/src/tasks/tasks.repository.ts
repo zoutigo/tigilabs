@@ -13,14 +13,14 @@ export class TasksRepository {
       where: {
         status: filter.status,
         priority: filter.priority,
-        assigneeId: filter.assigneeId
+        assigneeId: filter.assigneeId,
       },
       include: {
         assignee: true,
         reporter: true,
-        comments: true
+        comments: true,
       },
-      orderBy: { updatedAt: "desc" }
+      orderBy: { updatedAt: "desc" },
     });
   }
 
@@ -30,8 +30,8 @@ export class TasksRepository {
       include: {
         assignee: true,
         reporter: true,
-        comments: { include: { user: true }, orderBy: { createdAt: "asc" } }
-      }
+        comments: { include: { user: true }, orderBy: { createdAt: "asc" } },
+      },
     });
   }
 
@@ -39,8 +39,8 @@ export class TasksRepository {
     return this.prisma.task.create({
       data: {
         ...dto,
-        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined
-      }
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      },
     });
   }
 
@@ -49,8 +49,8 @@ export class TasksRepository {
       where: { id },
       data: {
         ...dto,
-        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined
-      }
+        dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+      },
     });
   }
 }

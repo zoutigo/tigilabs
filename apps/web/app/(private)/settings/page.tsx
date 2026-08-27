@@ -7,7 +7,11 @@ export default function SettingsPage() {
       <h2>Parametres</h2>
       <form className="form">
         <Input label="Nom de l'organisation" defaultValue="Tigilabs" />
-        <Input label="Email de contact" defaultValue="contact@tigilabs.com" type="email" />
+        <Input
+          label="Email de contact"
+          defaultValue="contact@tigilabs.com"
+          type="email"
+        />
         <Button type="submit">Enregistrer</Button>
       </form>
     </section>

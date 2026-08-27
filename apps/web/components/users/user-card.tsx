@@ -8,7 +8,9 @@ export function UserCard({ user }: Readonly<{ user: User }>) {
         <h3>{user.name}</h3>
       </Link>
       <p className="muted">{user.email}</p>
-      <span className="badge badge-neutral">{user.role ?? user.roles?.join(", ") ?? "Membre"}</span>
+      <span className="badge badge-neutral">
+        {user.role ?? user.roles?.join(", ") ?? "Membre"}
+      </span>
     </article>
   );
 }

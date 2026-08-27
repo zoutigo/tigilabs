@@ -3,8 +3,9 @@ node_modules
 dist
 coverage
 .turbo
+*.tsbuildinfo
 .env
 .env.*
 !.env.example
+!docker/.env.example
 *.log
-prisma/migrations/**/migration_lock.toml

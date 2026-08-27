@@ -9,7 +9,8 @@ export type User = {
   status: UserStatus;
 };
 
-export type TaskStatus = "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "ARCHIVED";
+export type TaskStatus =
+  "TODO" | "IN_PROGRESS" | "REVIEW" | "DONE" | "ARCHIVED";
 
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 

@@ -5,7 +5,7 @@ const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tasks", label: "Taches", icon: CheckSquare },
   { href: "/users", label: "Utilisateurs", icon: Users },
-  { href: "/settings", label: "Parametres", icon: Settings }
+  { href: "/settings", label: "Parametres", icon: Settings },
 ];
 
 export function Sidebar() {

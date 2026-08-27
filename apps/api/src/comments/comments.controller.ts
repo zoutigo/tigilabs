@@ -11,7 +11,10 @@ export class CommentsController {
   }
 
   @Post()
-  create(@Param("taskId") taskId: string, @Body() body: { content: string; userId: string }) {
+  create(
+    @Param("taskId") taskId: string,
+    @Body() body: { content: string; userId: string },
+  ) {
     return this.commentsService.create(taskId, body);
   }
 }

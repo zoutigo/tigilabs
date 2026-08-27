@@ -3,7 +3,7 @@ export const TaskStatus = {
   IN_PROGRESS: "IN_PROGRESS",
   REVIEW: "REVIEW",
   DONE: "DONE",
-  ARCHIVED: "ARCHIVED"
+  ARCHIVED: "ARCHIVED",
 } as const;
 
 export type TaskStatus = (typeof TaskStatus)[keyof typeof TaskStatus];

@@ -8,7 +8,7 @@ export class NotificationsService {
   findUnread(userId: string) {
     return this.prisma.notification.findMany({
       where: { userId, readAt: null },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     });
   }
 }

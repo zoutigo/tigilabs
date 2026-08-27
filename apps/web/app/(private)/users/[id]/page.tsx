@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { mockUsers } from "../../../../lib/api/users";
 
-export default function UserDetailPage({ params }: Readonly<{ params: { id: string } }>) {
+export default function UserDetailPage({
+  params,
+}: Readonly<{ params: { id: string } }>) {
   const user = mockUsers.find((item) => item.id === params.id);
 
   if (!user) {

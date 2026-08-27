@@ -3,7 +3,9 @@ import { TaskPriority } from "../../../../components/tasks/task-priority";
 import { TaskStatus } from "../../../../components/tasks/task-status";
 import { mockTasks } from "../../../../lib/api/tasks";
 
-export default function TaskDetailPage({ params }: Readonly<{ params: { id: string } }>) {
+export default function TaskDetailPage({
+  params,
+}: Readonly<{ params: { id: string } }>) {
   const task = mockTasks.find((item) => item.id === params.id);
 
   if (!task) {
@@ -23,7 +25,12 @@ export default function TaskDetailPage({ params }: Readonly<{ params: { id: stri
         </div>
       </div>
       <p>Responsable : {task.assignee?.name ?? "Non affecte"}</p>
-      <p>Echeance : {task.dueDate ? new Date(task.dueDate).toLocaleDateString("fr-FR") : "Aucune"}</p>
+      <p>
+        Echeance :{" "}
+        {task.dueDate
+          ? new Date(task.dueDate).toLocaleDateString("fr-FR")
+          : "Aucune"}
+      </p>
     </article>
   );
 }

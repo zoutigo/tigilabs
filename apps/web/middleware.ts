@@ -4,7 +4,9 @@ const privateRoutes = ["/dashboard", "/tasks", "/users", "/settings"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isPrivateRoute = privateRoutes.some((route) => pathname.startsWith(route));
+  const isPrivateRoute = privateRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
   const session = request.cookies.get("tigilabs_session");
 
   if (isPrivateRoute && !session) {
@@ -17,5 +19,10 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/tasks/:path*", "/users/:path*", "/settings/:path*"]
+  matcher: [
+    "/dashboard/:path*",
+    "/tasks/:path*",
+    "/users/:path*",
+    "/settings/:path*",
+  ],
 };

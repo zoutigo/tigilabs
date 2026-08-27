@@ -8,7 +8,7 @@ export class RolesService {
   findAll() {
     return this.prisma.role.findMany({
       include: { permissions: { include: { permission: true } } },
-      orderBy: { name: "asc" }
+      orderBy: { name: "asc" },
     });
   }
 }

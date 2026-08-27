@@ -4,6 +4,6 @@ import { apiClient } from "./client";
 export function login(payload: LoginPayload) {
   return apiClient<AuthSession>("/auth/login", {
     body: JSON.stringify(payload),
-    method: "POST"
+    method: "POST",
   });
 }

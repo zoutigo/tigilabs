@@ -15,8 +15,9 @@ export default function AboutPage() {
       <section className="section">
         <h1>A propos de Tigilabs</h1>
         <p>
-          Tigilabs est une société camerounaise de solutions numériques. Nous construisons des outils
-          métier fiables, maintenables et adaptés aux réalités opérationnelles locales.
+          Tigilabs est une société camerounaise de solutions numériques. Nous
+          construisons des outils métier fiables, maintenables et adaptés aux
+          réalités opérationnelles locales.
         </p>
       </section>
     </main>

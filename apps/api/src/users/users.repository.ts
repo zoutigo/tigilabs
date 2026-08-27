@@ -11,7 +11,7 @@ const publicUserSelection = {
   status: true,
   createdAt: true,
   updatedAt: true,
-  roles: { include: { role: true } }
+  roles: { include: { role: true } },
 };
 
 @Injectable()
@@ -21,21 +21,21 @@ export class UsersRepository {
   findAll() {
     return this.prisma.user.findMany({
       select: publicUserSelection,
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     });
   }
 
   findOne(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      select: publicUserSelection
+      select: publicUserSelection,
     });
   }
 
   findByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },
-      include: { roles: { include: { role: true } } }
+      include: { roles: { include: { role: true } } },
     });
   }
 
@@ -46,9 +46,9 @@ export class UsersRepository {
     return this.prisma.user.create({
       data: {
         ...data,
-        passwordHash
+        passwordHash,
       },
-      select: publicUserSelection
+      select: publicUserSelection,
     });
   }
 
@@ -56,7 +56,7 @@ export class UsersRepository {
     return this.prisma.user.update({
       where: { id },
       data: dto,
-      select: publicUserSelection
+      select: publicUserSelection,
     });
   }
 }

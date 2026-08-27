@@ -2,20 +2,26 @@ import { z } from "zod";
 
 export const userStatusSchema = z.enum(["ACTIVE", "INVITED", "DISABLED"]);
 
-export const taskStatusSchema = z.enum(["TODO", "IN_PROGRESS", "REVIEW", "DONE", "ARCHIVED"]);
+export const taskStatusSchema = z.enum([
+  "TODO",
+  "IN_PROGRESS",
+  "REVIEW",
+  "DONE",
+  "ARCHIVED",
+]);
 
 export const taskPrioritySchema = z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]);
 
 export const loginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8)
+  password: z.string().min(8),
 });
 
 export const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(2),
   password: z.string().min(8),
-  status: userStatusSchema.optional()
+  status: userStatusSchema.optional(),
 });
 
 export const createTaskSchema = z.object({
@@ -25,7 +31,7 @@ export const createTaskSchema = z.object({
   priority: taskPrioritySchema.optional(),
   dueDate: z.string().datetime().optional(),
   assigneeId: z.string().optional(),
-  reporterId: z.string()
+  reporterId: z.string(),
 });
 
 export const updateTaskSchema = createTaskSchema.partial();
