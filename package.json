@@ -1,0 +1,22 @@
+{
+  "name": "tigilabs",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.15.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @tigilabs/web --filter @tigilabs/api dev",
+    "dev:web": "pnpm --filter @tigilabs/web dev",
+    "dev:api": "pnpm --filter @tigilabs/api start:dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "format": "prettier --write .",
+    "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:migrate": "prisma migrate dev --schema prisma/schema.prisma"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "prisma": "^5.22.0",
+    "typescript": "^5.6.3"
+  }
+}
