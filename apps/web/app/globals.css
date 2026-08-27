@@ -98,6 +98,31 @@ input[aria-invalid="true"]:focus {
   color: var(--success);
 }
 
+.auth-success-message {
+  align-items: flex-start;
+  background: #ecfdf3;
+  border: 1px solid #abefc6;
+  border-radius: 8px;
+  color: #085d3a;
+  display: flex;
+  gap: 12px;
+  line-height: 1.5;
+  margin: 18px 0;
+  padding: 14px;
+}
+
+.auth-success-message strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.auth-success-message p {
+  color: #176b4d;
+  font-size: 14px;
+  margin: 0;
+}
+
 textarea {
   resize: vertical;
 }

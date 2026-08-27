@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginInput } from "@tigilabs/schemas";
+import { CircleCheck } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -22,6 +23,14 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string | null>(null);
+  const showRegistrationSuccess = searchParams.get("registered") === "1";
+  const activationExpiresInHours = Number(
+    searchParams.get("activationExpiresInHours"),
+  );
+  const activationDelayText =
+    Number.isFinite(activationExpiresInHours) && activationExpiresInHours > 0
+      ? `Le lien d'activation est valable ${activationExpiresInHours} heures.`
+      : null;
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -51,6 +60,19 @@ function LoginContent() {
       </Link>
       <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
         <h1>Connexion</h1>
+        {showRegistrationSuccess ? (
+          <div className="auth-success-message" role="status">
+            <CircleCheck aria-hidden="true" size={22} />
+            <div>
+              <strong>Compte cree avec succes.</strong>
+              <p>
+                Un email a ete envoye dans votre boite mail. Cliquez sur le lien
+                contenu dans cet email pour activer votre compte.
+                {activationDelayText ? ` ${activationDelayText}` : null}
+              </p>
+            </div>
+          </div>
+        ) : null}
         <form className="form" onSubmit={handleSubmit(onSubmit)}>
           <Input
             error={errors.email?.message}

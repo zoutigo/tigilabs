@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, type RegisterInput } from "@tigilabs/schemas";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "../../../components/ui/button";
@@ -10,12 +11,13 @@ import { Input } from "../../../components/ui/input";
 import { register as registerAccount } from "../../../lib/api/auth";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [formError, setFormError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
+    reset,
   } = useForm<RegisterInput>({
     mode: "onChange",
     resolver: zodResolver(registerSchema),
@@ -23,10 +25,15 @@ export default function RegisterPage() {
 
   async function onSubmit(values: RegisterInput) {
     setFormError(null);
-    setSuccess(null);
     try {
       const response = await registerAccount(values);
-      setSuccess(response.message);
+      reset();
+      const params = new URLSearchParams({
+        registered: "1",
+        activationExpiresInHours: String(response.activationExpiresInHours),
+      });
+
+      router.replace(`/login?${params.toString()}`);
     } catch (error) {
       setFormError(
         error instanceof Error ? error.message : "Inscription impossible.",
@@ -76,7 +83,6 @@ export default function RegisterPage() {
             {...register("passwordConfirm")}
           />
           {formError ? <p className="form-error">{formError}</p> : null}
-          {success ? <p className="form-success">{success}</p> : null}
           <Button disabled={isSubmitting} type="submit">
             {isSubmitting ? "Inscription..." : "Creer mon compte"}
           </Button>

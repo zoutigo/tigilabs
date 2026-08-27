@@ -114,6 +114,7 @@ describe("AuthService", () => {
         passwordConfirm: "password123",
       }),
     ).resolves.toEqual({
+      activationExpiresInHours: 24,
       message: "Compte cree. Confirmez votre adresse email pour l'activer.",
     });
 

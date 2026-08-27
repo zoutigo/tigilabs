@@ -116,6 +116,7 @@ export class AuthService {
     });
 
     return {
+      activationExpiresInHours: EMAIL_CONFIRMATION_EXPIRES_IN_HOURS,
       message: "Compte cree. Confirmez votre adresse email pour l'activer.",
     };
   }

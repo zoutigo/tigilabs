@@ -10,7 +10,10 @@ export function login(payload: LoginPayload) {
 }
 
 export function register(payload: RegisterPayload) {
-  return authRequest<{ message: string }>("/api/auth/register", payload);
+  return authRequest<{ activationExpiresInHours: number; message: string }>(
+    "/api/auth/register",
+    payload,
+  );
 }
 
 export function confirmEmail(token: string) {
