@@ -60,6 +60,44 @@ textarea {
   width: 100%;
 }
 
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  outline: 3px solid rgba(23, 107, 135, 0.16);
+}
+
+input.input-error,
+input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+input.input-error:focus,
+input[aria-invalid="true"]:focus {
+  outline-color: rgba(180, 35, 24, 0.16);
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+}
+
+.field-error,
+.form-error,
+.form-success {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.field-error,
+.form-error {
+  color: var(--danger);
+}
+
+.form-success {
+  color: var(--success);
+}
+
 textarea {
   resize: vertical;
 }

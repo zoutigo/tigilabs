@@ -12,3 +12,5 @@
 
 - Conserver des changements scopes et coherents avec les patterns existants du monorepo.
 - Ne jamais revert des changements non faits par l'agent sans demande explicite.
+- Pour les formulaires front, utiliser React Hook Form. Les erreurs sont affichees en `onChange`; au submit, si un champ est invalide, le focus va sur ce champ, l'erreur du champ est affichee et la bordure de l'input passe en rouge.
+- Les composants shadcn sont privilegies pour l'UI.

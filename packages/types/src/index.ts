@@ -3,6 +3,8 @@ export type UserStatus = "ACTIVE" | "INVITED" | "DISABLED";
 export type User = {
   id: string;
   email: string;
+  firstName?: string | null;
+  lastName?: string | null;
   name: string;
   role?: string;
   roles?: string[];
@@ -27,6 +29,24 @@ export type Task = {
 export type LoginPayload = {
   email: string;
   password: string;
+};
+
+export type RegisterPayload = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  passwordConfirm: string;
+};
+
+export type ForgotPasswordPayload = {
+  email: string;
+};
+
+export type ResetPasswordPayload = {
+  token: string;
+  password: string;
+  passwordConfirm: string;
 };
 
 export type AuthSession = {
