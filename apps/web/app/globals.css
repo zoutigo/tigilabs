@@ -1754,6 +1754,10 @@ textarea {
     display: block;
   }
 
+  .sidebar {
+    display: none;
+  }
+
   .private-content {
     padding: 16px 12px 24px;
   }
