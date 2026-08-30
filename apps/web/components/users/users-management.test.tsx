@@ -11,6 +11,7 @@ const apiMocks = vi.hoisted(() => ({
 const users: User[] = [
   {
     email: "valery@tigilabs.com",
+    emailVerifiedAt: "2026-01-01T00:00:00.000Z",
     firstName: "Valery",
     id: "user-admin",
     lastName: "Mbenda",
@@ -21,12 +22,24 @@ const users: User[] = [
   },
   {
     email: "serge@tigilabs.com",
+    emailVerifiedAt: "2026-01-02T00:00:00.000Z",
     firstName: "Serge",
     id: "user-manager",
     lastName: "Biya",
     name: "Serge Biya",
     role: "MANAGER",
     roles: ["MANAGER"],
+    status: "INVITED",
+  },
+  {
+    email: "nadia@tigilabs.com",
+    emailVerifiedAt: null,
+    firstName: "Nadia",
+    id: "user-pending-email",
+    lastName: "Kone",
+    name: "Nadia Kone",
+    role: undefined,
+    roles: [],
     status: "INVITED",
   },
 ];
@@ -117,5 +130,49 @@ describe("UsersManagement", () => {
     await waitFor(() => {
       expect(select.value).toBe("INVITED");
     });
+  });
+
+  it("shows the validation state of each account", () => {
+    renderManagement();
+
+    expect(screen.getByText("Compte valide")).toBeInTheDocument();
+    expect(screen.getByText("En attente de validation")).toBeInTheDocument();
+    expect(screen.getByText("Email non confirme")).toBeInTheDocument();
+  });
+
+  it("lets an admin approve a user whose email is confirmed", async () => {
+    apiMocks.updateUser.mockResolvedValue({});
+    renderManagement();
+
+    fireEvent.click(screen.getByRole("button", { name: "Valider" }));
+
+    await waitFor(() => {
+      expect(apiMocks.updateUser).toHaveBeenCalledWith("user-manager", {
+        status: "ACTIVE",
+      });
+    });
+    expect(
+      await screen.findByText("Serge Biya peut maintenant se connecter."),
+    ).toBeInTheDocument();
+  });
+
+  it("does not offer to approve a user whose email is not confirmed", () => {
+    renderManagement();
+
+    const buttons = screen.getAllByRole("button", { name: "Valider" });
+    expect(buttons).toHaveLength(1);
+  });
+
+  it("reverts the approval and shows an error toast on failure", async () => {
+    apiMocks.updateUser.mockRejectedValue(new Error("Validation impossible."));
+    renderManagement();
+
+    fireEvent.click(screen.getByRole("button", { name: "Valider" }));
+
+    expect(
+      await screen.findByText("La validation du compte a echoue."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Validation impossible.")).toBeInTheDocument();
+    expect(screen.getByText("En attente de validation")).toBeInTheDocument();
   });
 });

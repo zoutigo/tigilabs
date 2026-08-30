@@ -34,10 +34,12 @@ const jwtService = {
   verifyAsync: jest.fn(),
 };
 const usersService = {
+  findApprovers: jest.fn(),
   findByEmail: jest.fn(),
   findOne: jest.fn(),
 };
 const authMailService = {
+  sendAdminNewUserNotification: jest.fn(),
   sendEmailChangeConfirmation: jest.fn(),
   sendEmailConfirmation: jest.fn(),
   sendPasswordReset: jest.fn(),
@@ -87,6 +89,7 @@ describe("AuthService", () => {
       name: "Alice Martin",
       status: UserStatus.ACTIVE,
     });
+    usersService.findApprovers.mockResolvedValue([]);
     prisma.authToken.update.mockResolvedValue({});
     prisma.authToken.updateMany.mockImplementation(({ where }) => {
       authTokens
@@ -153,9 +156,56 @@ describe("AuthService", () => {
     );
   });
 
+  it("notifies every admin approver by email when a new user registers", async () => {
+    usersService.findApprovers.mockResolvedValue([
+      { email: "admin@tigilabs.com", firstName: "Ada", name: "Ada Admin" },
+      { email: "root@tigilabs.com", firstName: null, name: "Root" },
+    ]);
+
+    await service.register({
+      email: "alice@example.com",
+      firstName: "Alice",
+      lastName: "Martin",
+      password: "Password123!",
+      passwordConfirm: "Password123!",
+    });
+
+    expect(authMailService.sendAdminNewUserNotification).toHaveBeenCalledTimes(
+      2,
+    );
+    expect(authMailService.sendAdminNewUserNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "admin@tigilabs.com",
+        adminName: "Ada",
+        newUserEmail: "alice@example.com",
+        url: "http://localhost:3100/users",
+      }),
+    );
+    expect(authMailService.sendAdminNewUserNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ to: "root@tigilabs.com", adminName: "Root" }),
+    );
+  });
+
   it("rejects login until the email is confirmed", async () => {
     usersService.findByEmail.mockResolvedValue({
       email: "alice@example.com",
+      emailVerifiedAt: null,
+      id: "user-1",
+      name: "Alice Martin",
+      passwordHash: await bcrypt.hash("Password123!", 4),
+      roles: [],
+      status: UserStatus.ACTIVE,
+    });
+
+    await expect(
+      service.login({ email: "alice@example.com", password: "Password123!" }),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it("rejects login until an administrator has validated the account", async () => {
+    usersService.findByEmail.mockResolvedValue({
+      email: "alice@example.com",
+      emailVerifiedAt: new Date(),
       id: "user-1",
       name: "Alice Martin",
       passwordHash: await bcrypt.hash("Password123!", 4),
@@ -168,7 +218,28 @@ describe("AuthService", () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it("marks an email confirmation token as used and activates the user", async () => {
+  it("logs in once the email is confirmed and the account is admin-validated", async () => {
+    usersService.findByEmail.mockResolvedValue({
+      email: "alice@example.com",
+      emailVerifiedAt: new Date(),
+      id: "user-1",
+      name: "Alice Martin",
+      passwordHash: await bcrypt.hash("Password123!", 4),
+      roles: [],
+      status: UserStatus.ACTIVE,
+    });
+
+    await expect(
+      service.login({ email: "alice@example.com", password: "Password123!" }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        accessToken: "signed-token",
+        refreshToken: "signed-token",
+      }),
+    );
+  });
+
+  it("marks the email as confirmed without activating the account", async () => {
     await service.register({
       email: "alice@example.com",
       firstName: "Alice",
@@ -180,10 +251,11 @@ describe("AuthService", () => {
     const token = new URL(url).searchParams.get("token");
 
     await expect(service.confirmEmail(token ?? "")).resolves.toEqual({
-      message: "Email confirme. Vous pouvez maintenant vous connecter.",
+      message:
+        "Email confirme. Votre compte doit encore etre valide par un administrateur avant de pouvoir vous connecter.",
     });
     expect(prisma.user.update).toHaveBeenCalledWith({
-      data: { status: UserStatus.ACTIVE },
+      data: { emailVerifiedAt: expect.any(Date) },
       where: { id: "user-1" },
     });
   });

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import type { User, UserStatus } from "@tigilabs/types";
 import { useRoles, useUsers } from "../../hooks/use-users";
 import { updateUser } from "../../lib/api/users";
+import { Button } from "../ui/button";
 import { useToast } from "../ui/toast";
 
 const statusOptions: Array<{ label: string; value: UserStatus }> = [
@@ -44,6 +45,34 @@ export function UsersManagement() {
       toast({
         description: error instanceof Error ? error.message : undefined,
         title: "La mise a jour du statut a echoue.",
+        variant: "error",
+      });
+    }
+  }
+
+  async function handleApprove(user: User) {
+    const previous = user.status;
+    setUsers((current) =>
+      current.map((item) =>
+        item.id === user.id ? { ...item, status: "ACTIVE" } : item,
+      ),
+    );
+
+    try {
+      await updateUser(user.id, { status: "ACTIVE" });
+      toast({
+        title: `${user.name} peut maintenant se connecter.`,
+        variant: "success",
+      });
+    } catch (error) {
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === user.id ? { ...item, status: previous } : item,
+        ),
+      );
+      toast({
+        description: error instanceof Error ? error.message : undefined,
+        title: "La validation du compte a echoue.",
         variant: "error",
       });
     }
@@ -98,6 +127,7 @@ export function UsersManagement() {
               <th>Prenom</th>
               <th>Email</th>
               <th>Statut</th>
+              <th>Validation</th>
               <th>Role</th>
             </tr>
           </thead>
@@ -124,6 +154,9 @@ export function UsersManagement() {
                     ))}
                   </select>
                 </td>
+                <td data-label="Validation">
+                  <ValidationCell onApprove={handleApprove} user={user} />
+                </td>
                 <td data-label="Role">
                   <select
                     aria-label={`Role de ${user.name}`}
@@ -146,5 +179,34 @@ export function UsersManagement() {
         </table>
       </div>
     </section>
+  );
+}
+
+function ValidationCell({
+  onApprove,
+  user,
+}: {
+  onApprove: (user: User) => void;
+  user: User;
+}) {
+  if (!user.emailVerifiedAt) {
+    return <span className="badge badge-warning">Email non confirme</span>;
+  }
+
+  if (user.status === "DISABLED") {
+    return <span className="badge badge-danger">Compte desactive</span>;
+  }
+
+  if (user.status === "ACTIVE") {
+    return <span className="badge badge-success">Compte valide</span>;
+  }
+
+  return (
+    <div className="validation-pending">
+      <span className="badge badge-warning">En attente de validation</span>
+      <Button onClick={() => onApprove(user)} type="button" variant="secondary">
+        Valider
+      </Button>
+    </div>
   );
 }

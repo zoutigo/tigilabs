@@ -879,6 +879,17 @@ textarea {
   color: var(--badge-danger-fg);
 }
 
+.validation-pending {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.validation-pending .tl-button {
+  padding: 6px 12px;
+}
+
 .form {
   display: grid;
   gap: 14px;

@@ -9,10 +9,28 @@ type BackendError = {
   message?: string | string[];
 };
 
-export async function forwardAuthRequest(path: string, body: unknown) {
+/**
+ * The API only ever sees this server's own address, since every request is
+ * relayed through this Next.js proxy. Forwarding the client's real address
+ * lets the API's per-IP rate limiting (brute-force protection on login and
+ * register) key on the actual caller instead of lumping every visitor into
+ * one shared bucket.
+ */
+export function resolveClientIp(request: Request): string | undefined {
+  const forwarded = request.headers.get("x-forwarded-for");
+  const firstForwarded = forwarded?.split(",")[0]?.trim();
+
+  return firstForwarded || request.headers.get("x-real-ip") || undefined;
+}
+
+export async function forwardAuthRequest(
+  path: string,
+  body: unknown,
+  clientIp?: string,
+) {
   const response = await fetch(`${API_URL}${path}`, {
     body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
+    headers: forwardedHeaders(clientIp),
     method: "POST",
   });
   const payload = await readJson(response);
@@ -27,10 +45,10 @@ export async function forwardAuthRequest(path: string, body: unknown) {
   return NextResponse.json(payload);
 }
 
-export async function loginWithCookies(body: unknown) {
+export async function loginWithCookies(body: unknown, clientIp?: string) {
   const response = await fetch(`${API_URL}/auth/login`, {
     body: JSON.stringify(body),
-    headers: { "Content-Type": "application/json" },
+    headers: forwardedHeaders(clientIp),
     method: "POST",
   });
   const payload = await readJson(response);
@@ -67,6 +85,13 @@ export function logoutWithCookies() {
   response.cookies.set(ACCESS_TOKEN_COOKIE, "", { maxAge: 0, path: "/" });
   response.cookies.set(REFRESH_TOKEN_COOKIE, "", { maxAge: 0, path: "/" });
   return response;
+}
+
+function forwardedHeaders(clientIp?: string): HeadersInit {
+  return {
+    "Content-Type": "application/json",
+    ...(clientIp ? { "x-forwarded-for": clientIp } : {}),
+  };
 }
 
 async function readJson(response: Response) {

@@ -51,8 +51,14 @@ export class AuthService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    if (user.status !== UserStatus.ACTIVE) {
+    if (!user.emailVerifiedAt) {
       throw new UnauthorizedException("Adresse email non confirmee.");
+    }
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException(
+        "Compte en attente de validation par un administrateur.",
+      );
     }
 
     const roles = user.roles?.map((item) => item.role.name) ?? [];
@@ -126,6 +132,8 @@ export class AuthService {
       url: this.buildWebUrl("/confirm-email", confirmationToken),
     });
 
+    await this.notifyApproversOfNewUser(user);
+
     return {
       activationExpiresInHours: EMAIL_CONFIRMATION_EXPIRES_IN_HOURS,
       message: "Compte cree. Confirmez votre adresse email pour l'activer.",
@@ -145,12 +153,13 @@ export class AuthService {
       }),
       this.prisma.user.update({
         where: { id: authToken.userId },
-        data: { status: UserStatus.ACTIVE },
+        data: { emailVerifiedAt: new Date() },
       }),
     ]);
 
     return {
-      message: "Email confirme. Vous pouvez maintenant vous connecter.",
+      message:
+        "Email confirme. Votre compte doit encore etre valide par un administrateur avant de pouvoir vous connecter.",
     };
   }
 
@@ -378,6 +387,27 @@ export class AuthService {
     };
   }
 
+  private async notifyApproversOfNewUser(user: {
+    email: string;
+    firstName: string | null;
+    name: string;
+  }) {
+    const approvers = await this.usersService.findApprovers();
+    const url = this.buildPlainWebUrl("/users");
+
+    await Promise.all(
+      approvers.map((approver) =>
+        this.authMailService.sendAdminNewUserNotification({
+          to: approver.email,
+          adminName: approver.firstName ?? approver.name,
+          newUserName: user.firstName ?? user.name,
+          newUserEmail: user.email,
+          url,
+        }),
+      ),
+    );
+  }
+
   private async createAuthToken(
     userId: string,
     type: AuthTokenType,
@@ -433,10 +463,16 @@ export class AuthService {
   }
 
   private buildWebUrl(path: string, token: string) {
-    const webUrl =
-      this.configService.get<string>("WEB_URL") ?? "http://localhost:3100";
-    const url = new URL(path, webUrl);
+    const url = new URL(path, this.getWebUrl());
     url.searchParams.set("token", token);
     return url.toString();
+  }
+
+  private buildPlainWebUrl(path: string) {
+    return new URL(path, this.getWebUrl()).toString();
+  }
+
+  private getWebUrl() {
+    return this.configService.get<string>("WEB_URL") ?? "http://localhost:3100";
   }
 }

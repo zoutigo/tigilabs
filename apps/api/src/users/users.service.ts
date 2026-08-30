@@ -27,6 +27,10 @@ export class UsersService {
     return this.usersRepository.findByEmail(email);
   }
 
+  findApprovers() {
+    return this.usersRepository.findApprovers();
+  }
+
   create(dto: CreateUserDto) {
     return this.usersRepository.create(dto).then(this.toPublicUser);
   }

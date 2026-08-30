@@ -1,5 +1,8 @@
-import { loginWithCookies } from "../../../../lib/api/server-auth";
+import {
+  loginWithCookies,
+  resolveClientIp,
+} from "../../../../lib/api/server-auth";
 
 export async function POST(request: Request) {
-  return loginWithCookies(await request.json());
+  return loginWithCookies(await request.json(), resolveClientIp(request));
 }

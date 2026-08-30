@@ -48,10 +48,11 @@ model User {
   firstName    String?
   lastName     String?
   name         String
-  passwordHash String
-  status       UserStatus @default(INVITED)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  passwordHash    String
+  status          UserStatus @default(INVITED)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   roles            UserRole[]
   authTokens       AuthToken[]

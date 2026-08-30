@@ -11,6 +11,7 @@ export type User = {
   roles?: string[];
   permissions?: string[];
   status: UserStatus;
+  emailVerifiedAt?: string | null;
 };
 
 export type Permission = {

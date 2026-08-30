@@ -1,5 +1,12 @@
-import { forwardAuthRequest } from "../../../../lib/api/server-auth";
+import {
+  forwardAuthRequest,
+  resolveClientIp,
+} from "../../../../lib/api/server-auth";
 
 export async function POST(request: Request) {
-  return forwardAuthRequest("/auth/confirm-email", await request.json());
+  return forwardAuthRequest(
+    "/auth/confirm-email",
+    await request.json(),
+    resolveClientIp(request),
+  );
 }
