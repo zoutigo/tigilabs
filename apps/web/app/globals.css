@@ -587,13 +587,16 @@ textarea {
   text-transform: uppercase;
 }
 
-.mobile-menu-nav-children {
-  display: grid;
-  gap: 4px;
+.mobile-menu-nav-parent.is-active {
+  color: var(--primary-strong);
 }
 
-.mobile-menu-nav-children a {
-  padding-left: 30px;
+.mobile-menu-nav-children {
+  border-left: 2px solid var(--line);
+  display: grid;
+  gap: 4px;
+  margin-left: 20px;
+  padding-left: 10px;
 }
 
 .mobile-menu-nav a,
@@ -615,6 +618,12 @@ textarea {
 .mobile-menu-nav a:hover,
 .mobile-menu-logout:hover {
   background: var(--panel-muted);
+}
+
+.mobile-menu-nav a.is-active {
+  background: var(--soft-blue);
+  color: var(--primary-strong);
+  font-weight: 700;
 }
 
 .mobile-menu-logout {
@@ -639,10 +648,14 @@ textarea {
 }
 
 .task-card {
-  align-items: start;
   display: grid;
-  gap: 14px;
-  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.task-card-badges {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 0;
 }
 
 .badge {
@@ -1843,10 +1856,15 @@ textarea {
   font-size: 11px;
   font-weight: 700;
   gap: 8px;
+  margin-bottom: 12px;
 }
 
 .breadcrumbs a {
   color: var(--primary);
+}
+
+.task-module-header .breadcrumbs {
+  margin-bottom: 0;
 }
 
 .task-group-header {

@@ -51,3 +51,34 @@ export const privateNavLinks: NavEntry[] = [
   { href: "/dashboard", icon: ScrollText, id: "reports", label: "Rapports" },
   { href: "/settings", icon: Settings, id: "settings", label: "Parametres" },
 ];
+
+export function isGroupActive(pathname: string, item: NavEntry) {
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
+export function isChildActive(pathname: string, child: NavLink) {
+  if (child.id === "tasks-mine") {
+    return pathname.startsWith("/tasks/my");
+  }
+
+  if (child.id === "tasks-overview") {
+    return (
+      pathname === "/tasks" ||
+      (pathname.startsWith("/tasks/") && !pathname.startsWith("/tasks/my"))
+    );
+  }
+
+  return pathname === child.href || pathname.startsWith(`${child.href}/`);
+}
+
+export function isFlatActive(pathname: string, href: string, id: string) {
+  if (id === "reports") {
+    return false;
+  }
+
+  if (href === "/dashboard") {
+    return pathname === href;
+  }
+
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

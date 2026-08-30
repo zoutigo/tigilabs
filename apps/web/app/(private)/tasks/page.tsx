@@ -9,6 +9,11 @@ export default function TasksPage({
 }: Readonly<{ searchParams?: { group?: string } }>) {
   return (
     <>
+      <div className="breadcrumbs">
+        <span>Taches</span>
+        <span>/</span>
+        <span>Synthese</span>
+      </div>
       <div className="toolbar">
         <p className="muted">
           Créer, affecter, prioriser et suivre le travail de l'équipe.

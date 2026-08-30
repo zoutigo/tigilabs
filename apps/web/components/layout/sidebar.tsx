@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TigilabsLogo } from "./brand-logo";
-import { privateNavLinks, type NavEntry, type NavLink } from "./navigation";
+import {
+  isChildActive,
+  isFlatActive,
+  isGroupActive,
+  privateNavLinks,
+} from "./navigation";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -71,35 +76,4 @@ export function Sidebar() {
       </div>
     </aside>
   );
-}
-
-function isGroupActive(pathname: string, item: NavEntry) {
-  return pathname === item.href || pathname.startsWith(`${item.href}/`);
-}
-
-function isChildActive(pathname: string, child: NavLink) {
-  if (child.id === "tasks-mine") {
-    return pathname.startsWith("/tasks/my");
-  }
-
-  if (child.id === "tasks-overview") {
-    return (
-      pathname === "/tasks" ||
-      (pathname.startsWith("/tasks/") && !pathname.startsWith("/tasks/my"))
-    );
-  }
-
-  return pathname === child.href || pathname.startsWith(`${child.href}/`);
-}
-
-function isFlatActive(pathname: string, href: string, id: string) {
-  if (id === "reports") {
-    return false;
-  }
-
-  if (href === "/dashboard") {
-    return pathname === href;
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
 }
