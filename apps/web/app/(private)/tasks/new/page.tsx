@@ -13,7 +13,6 @@ export default function NewTaskPage({
             <ArrowLeft size={15} />
             Retour a la synthese
           </Link>
-          <h2>Nouvelle tache</h2>
           <p className="muted">
             Ajoutez une tache a un groupe existant et affectez-la a un
             responsable.

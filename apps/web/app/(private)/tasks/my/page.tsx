@@ -42,12 +42,9 @@ export default function MyTasksPage() {
         <span>Mes taches</span>
       </div>
       <div className="toolbar">
-        <div>
-          <h2>Mes taches</h2>
-          <p className="muted">
-            Toutes les taches qui me sont affectees, tous groupes confondus.
-          </p>
-        </div>
+        <p className="muted">
+          Toutes les taches qui me sont affectees, tous groupes confondus.
+        </p>
       </div>
 
       <section className="task-kpis">

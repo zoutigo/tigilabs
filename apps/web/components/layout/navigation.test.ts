@@ -39,6 +39,23 @@ describe("filterNavLinksByPermissions", () => {
 
     expect(links.find((item) => item.id === "users")).toBeUndefined();
   });
+
+  it("hides contacts and settings without their dedicated permissions", () => {
+    const links = filterNavLinksByPermissions(privateNavLinks, ["task.create"]);
+
+    expect(links.find((item) => item.id === "contacts")).toBeUndefined();
+    expect(links.find((item) => item.id === "settings")).toBeUndefined();
+  });
+
+  it("shows contacts and settings when the user holds their permissions", () => {
+    const links = filterNavLinksByPermissions(privateNavLinks, [
+      "contact.manage",
+      "settings.manage",
+    ]);
+
+    expect(links.find((item) => item.id === "contacts")).toBeDefined();
+    expect(links.find((item) => item.id === "settings")).toBeDefined();
+  });
 });
 
 describe("isChildActive for the users group", () => {

@@ -8,9 +8,11 @@ import configuration from "./config/configuration";
 import { validateEnv } from "./config/env.validation";
 import { AppThrottlerGuard } from "./common/guards/app-throttler.guard";
 import { CommentsModule } from "./comments/comments.module";
+import { ContactModule } from "./contact/contact.module";
 import { DatabaseModule } from "./database/prisma.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { RolesModule } from "./roles/roles.module";
+import { SettingsModule } from "./settings/settings.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { UsersModule } from "./users/users.module";
 
@@ -35,6 +37,8 @@ import { UsersModule } from "./users/users.module";
     TasksModule,
     CommentsModule,
     NotificationsModule,
+    ContactModule,
+    SettingsModule,
     AuditModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],

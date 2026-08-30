@@ -135,6 +135,35 @@ export const createTaskProgressSchema = z.object({
   content: z.string().min(2),
 });
 
+export const contactMessageSchema = z.object({
+  name: z.string().trim().min(2, "Le nom doit contenir 2 caracteres minimum."),
+  email: z.string().email("Email invalide."),
+  subject: z.string().trim().max(160).optional(),
+  message: z
+    .string()
+    .trim()
+    .min(10, "Decrivez votre besoin en quelques mots (10 caracteres minimum).")
+    .max(4000, "Le message est trop long (4000 caracteres maximum)."),
+  /** Honeypot: must stay empty. A hidden field only bots tend to fill. */
+  website: z.string().max(0, "Champ invalide.").optional().or(z.literal("")),
+});
+
+export const siteSettingsSchema = z.object({
+  companyName: z.string().trim().min(2, "Nom d'entreprise requis."),
+  ownerName: z.string().trim().min(2, "Nom du responsable requis."),
+  contactEmail: z.string().email("Email invalide."),
+  contactPhone: z
+    .string()
+    .trim()
+    .min(6, "Numero de telephone invalide.")
+    .max(40, "Numero de telephone invalide."),
+  address: z.string().trim().max(240).optional().or(z.literal("")),
+  privacyPolicy: z
+    .string()
+    .trim()
+    .min(20, "La politique de confidentialite doit etre plus detaillee."),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
@@ -150,3 +179,5 @@ export type UpdateFirstNameInput = z.infer<typeof updateFirstNameSchema>;
 export type UpdateLastNameInput = z.infer<typeof updateLastNameSchema>;
 export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ContactMessageInput = z.infer<typeof contactMessageSchema>;
+export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;

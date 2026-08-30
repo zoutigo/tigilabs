@@ -138,3 +138,25 @@ export type ChangePasswordPayload = {
   newPassword: string;
   newPasswordConfirm: string;
 };
+
+export type ContactMessageStatus = "NEW" | "READ" | "ARCHIVED";
+
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  subject?: string | null;
+  message: string;
+  status: ContactMessageStatus;
+  createdAt: string;
+  readAt?: string | null;
+};
+
+export type SiteSettings = {
+  companyName: string;
+  ownerName: string;
+  contactEmail: string;
+  contactPhone: string;
+  address?: string | null;
+  privacyPolicy: string;
+};

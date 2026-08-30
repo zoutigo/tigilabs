@@ -38,9 +38,29 @@ const PERMISSIONS: Array<{
     action: "manage",
     description: "Gerer les roles et leurs permissions",
   },
+  {
+    subject: "contact",
+    action: "manage",
+    description: "Consulter et traiter les messages de contact",
+  },
+  {
+    subject: "settings",
+    action: "manage",
+    description: "Gerer les parametres du site",
+  },
 ];
 
 const ADMIN_ROLE_NAME = "ADMIN";
+
+const DEFAULT_SITE_SETTINGS_ID = "site-settings-default";
+const DEFAULT_SITE_SETTINGS = {
+  companyName: "Tigilabs",
+  ownerName: "Direction Tigilabs",
+  contactEmail: "contact@tigilabs.com",
+  contactPhone: "+237 600 000 000",
+  privacyPolicy:
+    "Tigilabs collecte uniquement les informations necessaires au traitement de vos demandes de contact (nom, email, message). Ces donnees ne sont jamais cedees a des tiers et sont conservees le temps necessaire au traitement de votre demande. Vous pouvez demander leur suppression a tout moment en nous contactant.",
+};
 
 async function main() {
   const permissions = await Promise.all(
@@ -90,6 +110,12 @@ async function main() {
       }),
     ),
   );
+
+  await prisma.siteSettings.upsert({
+    where: { id: DEFAULT_SITE_SETTINGS_ID },
+    create: { id: DEFAULT_SITE_SETTINGS_ID, ...DEFAULT_SITE_SETTINGS },
+    update: {},
+  });
 
   console.log(
     `Seed RBAC: ${permissions.length} permissions, role ${ADMIN_ROLE_NAME} assigne a ${usersWithoutRole.length} utilisateur(s) sans role.`,

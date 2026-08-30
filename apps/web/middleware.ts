@@ -4,6 +4,7 @@ const privateRoutes = [
   "/dashboard",
   "/tasks",
   "/users",
+  "/contacts",
   "/settings",
   "/account",
 ];
@@ -29,6 +30,7 @@ export const config = {
     "/dashboard/:path*",
     "/tasks/:path*",
     "/users/:path*",
+    "/contacts/:path*",
     "/settings/:path*",
     "/account/:path*",
   ],
