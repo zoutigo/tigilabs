@@ -6,6 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import type { Task, TaskGroup, User } from "@tigilabs/types";
+import { useEffect, useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ToastProvider } from "../ui/toast";
 import { TaskWorkspace } from "./task-workspace";
@@ -120,8 +121,12 @@ const opsTaskDetail: Task = {
   title: "Structurer la roadmap produit",
 };
 
+const taskGroupsHook = vi.hoisted(() => ({
+  useTaskGroups: vi.fn(),
+}));
+
 vi.mock("../../hooks/use-tasks", () => ({
-  useTaskGroups: () => ({ groups }),
+  useTaskGroups: taskGroupsHook.useTaskGroups,
 }));
 
 vi.mock("../../hooks/use-users", () => ({
@@ -133,6 +138,7 @@ vi.mock("../../lib/api/tasks", () => apiMocks);
 describe("TaskWorkspace", () => {
   beforeEach(() => {
     apiMocks.getTaskGroup.mockRejectedValue(new Error("offline"));
+    taskGroupsHook.useTaskGroups.mockImplementation(() => ({ groups }));
   });
 
   afterEach(() => {
@@ -318,6 +324,44 @@ describe("TaskWorkspace", () => {
     });
     expect(within(row).getByText("Serge B.")).toBeInTheDocument();
     expect(within(row).getByText("Haute")).toBeInTheDocument();
+  });
+
+  it("replaces a stale group selection once the real groups load, keeping the create-task button reachable", async () => {
+    const staleMockGroup: TaskGroup = {
+      archivedAt: null,
+      completedTasks: 0,
+      createdAt: "2020-01-01T00:00:00.000Z",
+      createdById: "mock-user",
+      description: "",
+      id: "mock-stale-group",
+      name: "Groupe fictif",
+      overdueTasks: 0,
+      progress: 0,
+      status: "ACTIVE",
+      tasks: [],
+      totalTasks: 0,
+    };
+
+    taskGroupsHook.useTaskGroups.mockImplementation(() => {
+      const [current, setCurrent] = useState<TaskGroup[]>([staleMockGroup]);
+      useEffect(() => {
+        setCurrent(groups);
+      }, []);
+      return { groups: current };
+    });
+
+    renderWorkspace();
+
+    expect(
+      await screen.findByRole("heading", { name: "Immatriculation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Nouvelle tache" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Groupe fictif")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Aucun groupe actif pour le moment."),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the API failure from wiping out the summary data already loaded from the groups list", async () => {

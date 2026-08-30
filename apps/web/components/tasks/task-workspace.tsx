@@ -1,15 +1,20 @@
 "use client";
 
 import {
+  AlignLeft,
   Archive,
+  CalendarClock,
   CalendarDays,
   CheckCircle2,
   CircleAlert,
   Columns3,
+  FolderKanban,
   ListFilter,
   MoreVertical,
   Plus,
   Search,
+  Sparkles,
+  UserRound,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -74,7 +79,9 @@ export function TaskWorkspace() {
   const { users } = useUsers();
   const { toast } = useToast();
   const [groups, setGroups] = useState<TaskGroup[]>(loadedGroups);
-  const [selectedGroupId, setSelectedGroupId] = useState(loadedGroups[0]?.id);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(
+    undefined,
+  );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"ALL" | TaskStatus>("ALL");
   const [quickFilter, setQuickFilter] = useState("all");
@@ -88,7 +95,11 @@ export function TaskWorkspace() {
 
   useEffect(() => {
     setGroups(loadedGroups);
-    setSelectedGroupId((current) => current ?? loadedGroups[0]?.id);
+    setSelectedGroupId((current) =>
+      loadedGroups.some((group) => group.id === current)
+        ? current
+        : loadedGroups[0]?.id,
+    );
   }, [loadedGroups]);
 
   useEffect(() => {
@@ -120,7 +131,8 @@ export function TaskWorkspace() {
   }, [selectedGroupId]);
 
   const activeUsers = users.filter((user) => user.status === "ACTIVE");
-  const selectedGroup = groups.find((group) => group.id === selectedGroupId);
+  const selectedGroup =
+    groups.find((group) => group.id === selectedGroupId) ?? groups[0];
   const allTasks = selectedGroup?.tasks ?? [];
   const filteredTasks = useMemo(
     () =>
@@ -449,14 +461,18 @@ export function TaskWorkspace() {
                     required: "Le nom est obligatoire.",
                   })}
                 />
-                <label className="field">
-                  <span>Description</span>
+                <section className="task-description-panel">
+                  <h3>
+                    <AlignLeft size={16} />
+                    Description
+                  </h3>
                   <textarea
+                    className="description-control"
                     placeholder="Contexte du groupe"
                     rows={3}
                     {...groupForm.register("description")}
                   />
-                </label>
+                </section>
                 <Button type="submit">
                   <Plus size={17} />
                   Creer
@@ -667,9 +683,15 @@ export function TaskWorkspace() {
           className="form"
           onSubmit={taskForm.handleSubmit(handleCreateTask)}
         >
-          <label className="field">
-            <span>Groupe</span>
+          <div className="meta-card">
+            <div className="meta-head">
+              <span className="meta-icon">
+                <FolderKanban size={16} />
+              </span>
+              <span className="meta-label">Groupe</span>
+            </div>
             <select
+              className="meta-field-control"
               {...taskForm.register("groupId", {
                 required: "Le groupe est obligatoire.",
               })}
@@ -680,7 +702,7 @@ export function TaskWorkspace() {
                 </option>
               ))}
             </select>
-          </label>
+          </div>
           <Input
             error={taskForm.formState.errors.title?.message}
             label="Intitule"
@@ -689,59 +711,101 @@ export function TaskWorkspace() {
               required: "L'intitule est obligatoire.",
             })}
           />
-          <label className="field">
-            <span>Details</span>
+          <section className="task-description-panel">
+            <h3>
+              <AlignLeft size={16} />
+              Details
+            </h3>
             <textarea
+              className="description-control"
               placeholder="Contexte et resultat attendu"
               rows={4}
               {...taskForm.register("description")}
             />
-          </label>
-          <div className="two-columns">
-            <Input
-              label="Date de debut"
-              type="date"
-              {...taskForm.register("startDate")}
-            />
-            <Input
-              label="Date de fin prevue"
-              type="date"
-              {...taskForm.register("dueDate")}
-            />
-          </div>
-          <label className="field">
-            <span>Responsable</span>
-            <select {...taskForm.register("assignedToId")}>
-              <option value="">Sans responsable</option>
-              {activeUsers.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="two-columns">
-            <label className="field">
-              <span>Priorite</span>
-              <select {...taskForm.register("priority")}>
+          </section>
+          <div className="task-detail-meta">
+            <div className="meta-card">
+              <div className="meta-head">
+                <span className="meta-icon">
+                  <CalendarDays size={16} />
+                </span>
+                <span className="meta-label">Date de debut</span>
+              </div>
+              <input
+                className="meta-field-control"
+                type="date"
+                {...taskForm.register("startDate")}
+              />
+            </div>
+            <div className="meta-card">
+              <div className="meta-head">
+                <span className="meta-icon">
+                  <CalendarClock size={16} />
+                </span>
+                <span className="meta-label">Date de fin prevue</span>
+              </div>
+              <input
+                className="meta-field-control"
+                type="date"
+                {...taskForm.register("dueDate")}
+              />
+            </div>
+            <div className="meta-card">
+              <div className="meta-head">
+                <span className="meta-icon">
+                  <UserRound size={16} />
+                </span>
+                <span className="meta-label">Responsable</span>
+              </div>
+              <select
+                className="meta-field-control"
+                {...taskForm.register("assignedToId")}
+              >
+                <option value="">Sans responsable</option>
+                {activeUsers.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="meta-card">
+              <div className="meta-head">
+                <span className="meta-icon meta-icon-priority">
+                  <Sparkles size={16} />
+                </span>
+                <span className="meta-label">Priorite</span>
+              </div>
+              <select
+                className="meta-field-control"
+                {...taskForm.register("priority")}
+              >
                 <option value="LOW">Basse</option>
                 <option value="MEDIUM">Normale</option>
                 <option value="HIGH">Haute</option>
                 <option value="URGENT">Urgente</option>
               </select>
-            </label>
-            <label className="field">
-              <span>Statut</span>
-              <select {...taskForm.register("status")}>
-                <option value="TODO">A faire</option>
-                <option value="IN_PROGRESS">En cours</option>
-                <option value="BLOCKED">Bloquee</option>
-                <option value="DONE">Terminee</option>
-              </select>
-            </label>
+            </div>
+          </div>
+          <div className="meta-card">
+            <div className="meta-head">
+              <span className="meta-icon">
+                <CheckCircle2 size={16} />
+              </span>
+              <span className="meta-label">Statut initial</span>
+            </div>
+            <select
+              className="meta-field-control"
+              {...taskForm.register("status")}
+            >
+              <option value="TODO">A faire</option>
+              <option value="IN_PROGRESS">En cours</option>
+              <option value="BLOCKED">Bloquee</option>
+              <option value="DONE">Terminee</option>
+            </select>
           </div>
           <Button disabled={!groups.length} type="submit">
-            <CalendarDays size={17} />
+            <Plus size={17} />
             Ajouter
           </Button>
         </form>
@@ -763,10 +827,17 @@ export function TaskWorkspace() {
               required: "Le nom est obligatoire.",
             })}
           />
-          <label className="field">
-            <span>Description</span>
-            <textarea rows={3} {...renameForm.register("description")} />
-          </label>
+          <section className="task-description-panel">
+            <h3>
+              <AlignLeft size={16} />
+              Description
+            </h3>
+            <textarea
+              className="description-control"
+              rows={3}
+              {...renameForm.register("description")}
+            />
+          </section>
           <Button type="submit">Enregistrer</Button>
         </form>
       </Modal>
