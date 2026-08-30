@@ -238,6 +238,10 @@ export function getTaskGroups() {
   return apiClient<TaskGroup[]>("/tasks/groups");
 }
 
+export function getTaskGroup(id: string) {
+  return apiClient<TaskGroup>(`/tasks/groups/${id}`);
+}
+
 export function getTasks(query = "") {
   return apiClient<Task[]>(`/tasks${query}`);
 }

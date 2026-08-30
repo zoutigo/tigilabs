@@ -28,6 +28,7 @@ import {
   completeTask,
   createTask,
   createTaskGroup,
+  getTaskGroup,
   updateTaskGroup,
 } from "../../lib/api/tasks";
 import { Button } from "../ui/button";
@@ -85,6 +86,34 @@ export function TaskWorkspace() {
     setGroups(loadedGroups);
     setSelectedGroupId((current) => current ?? loadedGroups[0]?.id);
   }, [loadedGroups]);
+
+  useEffect(() => {
+    if (!selectedGroupId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    getTaskGroup(selectedGroupId)
+      .then((detail) => {
+        if (cancelled) {
+          return;
+        }
+
+        setGroups((current) =>
+          current.map((group) =>
+            group.id === detail.id ? { ...group, ...detail } : group,
+          ),
+        );
+      })
+      .catch(() => {
+        // Le resume charge via la liste des groupes reste affiche.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGroupId]);
 
   const activeUsers = users.filter((user) => user.status === "ACTIVE");
   const selectedGroup = groups.find((group) => group.id === selectedGroupId);

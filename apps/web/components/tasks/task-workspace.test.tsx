@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import type { Task, TaskGroup, User } from "@tigilabs/types";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { TaskWorkspace } from "./task-workspace";
 
 const apiMocks = vi.hoisted(() => ({
@@ -14,6 +14,7 @@ const apiMocks = vi.hoisted(() => ({
   completeTask: vi.fn(),
   createTask: vi.fn(),
   createTaskGroup: vi.fn(),
+  getTaskGroup: vi.fn(),
 }));
 
 const admin: User = {
@@ -71,7 +72,44 @@ const groups: TaskGroup[] = [
     tasks: [doneTask, bankTask],
     totalTasks: 2,
   },
+  {
+    archivedAt: null,
+    completedTasks: 0,
+    createdAt: "2026-05-21T12:00:00.000Z",
+    createdById: admin.id,
+    description: "Organisation du socle prive.",
+    id: "group-ops",
+    name: "Operations",
+    overdueTasks: 0,
+    progress: 0,
+    status: "ACTIVE",
+    // La liste des groupes ne renvoie qu'un resume des taches (id/status/dueDate).
+    tasks: [
+      {
+        dueDate: "2026-06-15T12:00:00.000Z",
+        groupId: "group-ops",
+        id: "task-roadmap",
+        priority: "MEDIUM",
+        startDate: "2026-06-01T12:00:00.000Z",
+        status: "TODO",
+        title: "",
+      } as Task,
+    ],
+    totalTasks: 1,
+  },
 ];
+
+const opsTaskDetail: Task = {
+  assignedTo: manager,
+  assignedToId: manager.id,
+  dueDate: "2026-06-15T12:00:00.000Z",
+  groupId: "group-ops",
+  id: "task-roadmap",
+  priority: "HIGH",
+  startDate: "2026-06-01T12:00:00.000Z",
+  status: "TODO",
+  title: "Structurer la roadmap produit",
+};
 
 vi.mock("../../hooks/use-tasks", () => ({
   useTaskGroups: () => ({ groups }),
@@ -84,6 +122,10 @@ vi.mock("../../hooks/use-users", () => ({
 vi.mock("../../lib/api/tasks", () => apiMocks);
 
 describe("TaskWorkspace", () => {
+  beforeEach(() => {
+    apiMocks.getTaskGroup.mockRejectedValue(new Error("offline"));
+  });
+
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -240,5 +282,45 @@ describe("TaskWorkspace", () => {
     expect(
       await screen.findByRole("heading", { name: "Nouveau groupe" }),
     ).toBeInTheDocument();
+  });
+
+  it("fetches and merges the full task details when a group is selected", async () => {
+    const opsGroup = groups.find((group) => group.id === "group-ops");
+    if (!opsGroup) {
+      throw new Error("group-ops fixture is missing");
+    }
+
+    apiMocks.getTaskGroup.mockImplementation(async (id: string) =>
+      id === "group-ops"
+        ? { ...opsGroup, tasks: [opsTaskDetail] }
+        : Promise.reject(new Error("offline")),
+    );
+
+    render(<TaskWorkspace />);
+
+    const opsGroupButton = screen.getByText("Operations").closest("button");
+    if (!opsGroupButton) {
+      throw new Error("Operations group button not found");
+    }
+    fireEvent.click(opsGroupButton);
+
+    const row = await screen.findByRole("row", {
+      name: /Structurer la roadmap produit/,
+    });
+    expect(within(row).getByText("Serge B.")).toBeInTheDocument();
+    expect(within(row).getByText("Haute")).toBeInTheDocument();
+  });
+
+  it("keeps the API failure from wiping out the summary data already loaded from the groups list", async () => {
+    apiMocks.getTaskGroup.mockRejectedValue(new Error("offline"));
+
+    render(<TaskWorkspace />);
+
+    await waitFor(() => {
+      expect(apiMocks.getTaskGroup).toHaveBeenCalledWith("group-incorporation");
+    });
+
+    expect(screen.getByText("Preparer les statuts")).toBeInTheDocument();
+    expect(screen.getByText("Ouvrir le compte bancaire")).toBeInTheDocument();
   });
 });
