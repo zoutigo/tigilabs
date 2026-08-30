@@ -359,6 +359,54 @@ describe("TaskWorkspace", () => {
     expect(within(row).getByText("Haute")).toBeInTheDocument();
   });
 
+  it("keeps already-fetched full task detail when the groups summary list is refetched with a new array reference", async () => {
+    const opsGroup = groups.find((group) => group.id === "group-ops");
+    if (!opsGroup) {
+      throw new Error("group-ops fixture is missing");
+    }
+
+    apiMocks.getTaskGroup.mockImplementation(async (id: string) =>
+      id === "group-ops"
+        ? { ...opsGroup, tasks: [opsTaskDetail] }
+        : Promise.reject(new Error("offline")),
+    );
+
+    const { rerender } = renderWorkspace();
+
+    const opsGroupButton = screen.getByText("Operations").closest("button");
+    if (!opsGroupButton) {
+      throw new Error("Operations group button not found");
+    }
+    fireEvent.click(opsGroupButton);
+
+    await screen.findByRole("row", {
+      name: /Structurer la roadmap produit/,
+    });
+
+    // Simulate the groups summary list being refetched with a brand new
+    // array reference (e.g. React Strict Mode double-invoking effects, or a
+    // future polling refresh). It only ever carries the lightweight task
+    // summary (id/status/dueDate), so this must not wipe the full task
+    // detail already fetched for the selected group. The mock must return
+    // the same reference on every call, or the effect depending on it
+    // would refire on each render and loop forever.
+    const refreshedGroups = groups.map((group) => ({ ...group }));
+    taskGroupsHook.useTaskGroups.mockImplementation(() => ({
+      groups: refreshedGroups,
+    }));
+    rerender(
+      <ToastProvider>
+        <TaskWorkspace />
+      </ToastProvider>,
+    );
+
+    const row = screen.getByRole("row", {
+      name: /Structurer la roadmap produit/,
+    });
+    expect(within(row).getByText("Serge B.")).toBeInTheDocument();
+    expect(within(row).getByText("Haute")).toBeInTheDocument();
+  });
+
   it("replaces a stale group selection once the real groups load, keeping the create-task button reachable", async () => {
     const staleMockGroup: TaskGroup = {
       archivedAt: null,

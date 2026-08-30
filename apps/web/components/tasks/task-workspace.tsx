@@ -93,7 +93,16 @@ export function TaskWorkspace({
   const [isGroupFilterOpen, setIsGroupFilterOpen] = useState(false);
 
   useEffect(() => {
-    setGroups(loadedGroups);
+    setGroups((current) =>
+      loadedGroups.map((incoming) => {
+        const existing = current.find((group) => group.id === incoming.id);
+        // The group list only carries a lightweight task summary
+        // (id/status/dueDate). Keep whatever full task detail we already
+        // fetched for this group instead of clobbering it back to the
+        // summary every time the group list is refetched.
+        return existing ? { ...incoming, tasks: existing.tasks } : incoming;
+      }),
+    );
     setSelectedGroupId((current) =>
       loadedGroups.some((group) => group.id === current)
         ? current

@@ -1833,6 +1833,7 @@ textarea {
 .tasks-layout {
   gap: 14px;
   grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
+  min-width: 0;
 }
 
 .task-groups-panel {
