@@ -3,8 +3,9 @@
 ## Git et qualite
 
 - Sauf instruction explicite contraire, tous les travaux se font sur la branche `dev`. Si la branche courante n'est pas `dev`, basculer dessus avant de modifier le code ou signaler le blocage.
-- Avant chaque commit, executer et monitorer les controles locaux : `pnpm typecheck`, `pnpm format`, puis `pnpm test`. Si un hook pre-commit les lance, attendre sa fin et corriger les erreurs au lieu de contourner le hook.
-- Apres chaque travail termine, creer un commit puis pousser vers `origin/dev`.
+- Apres chaque modification de code (feature, fix, refactor), ecrire ou completer des tests approfondis couvrant le comportement nominal ET la gestion des erreurs (cas invalides, erreurs API, etats limites), colocalises selon les conventions du module (`*.spec.ts` cote api, `*.test.tsx`/`*.test.ts` cote web).
+- Avant chaque commit, executer et monitorer les controles locaux dans cet ordre : `pnpm typecheck`, `pnpm lint`, `pnpm format` (ou `pnpm check:repo` qui enchaine format:check + lint + typecheck + test), puis `pnpm test`. Si un hook pre-commit les lance, attendre sa fin et corriger les erreurs au lieu de contourner le hook.
+- Une tache n'est consideree terminee qu'une fois ces controles verts, le commit cree et le push vers `origin/dev` effectue : ne pas s'arreter a la seule modification du code.
 - Apres le push, monitorer la CI GitHub Actions declenchee par `dev` et corriger tout echec avant de considerer le travail termine.
 - Ne pas utiliser `--no-verify` sans accord explicite de l'utilisateur.
 

@@ -260,6 +260,16 @@ export function createTaskGroup(payload: {
   });
 }
 
+export function updateTaskGroup(
+  id: string,
+  payload: { name?: string; description?: string },
+) {
+  return apiClient<TaskGroup>(`/tasks/groups/${id}`, {
+    body: JSON.stringify(payload),
+    method: "PATCH",
+  });
+}
+
 export function archiveTaskGroup(id: string) {
   return apiClient<TaskGroup>(`/tasks/groups/${id}/archive`, {
     method: "PATCH",

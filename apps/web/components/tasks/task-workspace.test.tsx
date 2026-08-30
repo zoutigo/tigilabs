@@ -152,6 +152,7 @@ describe("TaskWorkspace", () => {
   it("shows the required title error before creating a task", async () => {
     render(<TaskWorkspace />);
 
+    fireEvent.click(screen.getByRole("button", { name: "Nouvelle tache" }));
     fireEvent.click(screen.getByRole("button", { name: "Ajouter" }));
 
     expect(
@@ -162,5 +163,82 @@ describe("TaskWorkspace", () => {
       "aria-invalid",
       "true",
     );
+  });
+
+  it("keeps the task and group creation forms hidden until their trigger is clicked", () => {
+    render(<TaskWorkspace />);
+
+    expect(
+      screen.queryByPlaceholderText("Deposer le dossier"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText("Immatriculation Tigilabs"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Nouvelle tache" }));
+    expect(
+      screen.getByPlaceholderText("Deposer le dossier"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
+    expect(
+      screen.queryByPlaceholderText("Deposer le dossier"),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Creer un groupe" }));
+    expect(
+      screen.getByPlaceholderText("Immatriculation Tigilabs"),
+    ).toBeInTheDocument();
+  });
+
+  it("creates a task optimistically, closes the modal, and keeps the fallback when the API call fails", async () => {
+    apiMocks.createTask.mockRejectedValue(new Error("offline"));
+
+    render(<TaskWorkspace />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Nouvelle tache" }));
+    fireEvent.change(screen.getByPlaceholderText("Deposer le dossier"), {
+      target: { value: "Relire le contrat" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter" }));
+
+    await waitFor(() => {
+      expect(apiMocks.createTask).toHaveBeenCalledWith(
+        expect.objectContaining({
+          groupId: "group-incorporation",
+          title: "Relire le contrat",
+        }),
+      );
+    });
+
+    expect(
+      screen.queryByPlaceholderText("Deposer le dossier"),
+    ).not.toBeInTheDocument();
+    expect(await screen.findByText("Relire le contrat")).toBeInTheDocument();
+  });
+
+  it("creates a group optimistically, closes the modal, and keeps the fallback when the API call fails", async () => {
+    apiMocks.createTaskGroup.mockRejectedValue(new Error("offline"));
+
+    render(<TaskWorkspace />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Creer un groupe" }));
+    fireEvent.change(screen.getByPlaceholderText("Immatriculation Tigilabs"), {
+      target: { value: "Nouveau groupe" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Creer" }));
+
+    await waitFor(() => {
+      expect(apiMocks.createTaskGroup).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "Nouveau groupe" }),
+      );
+    });
+
+    expect(
+      screen.queryByPlaceholderText("Immatriculation Tigilabs"),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Nouveau groupe" }),
+    ).toBeInTheDocument();
   });
 });

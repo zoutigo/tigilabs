@@ -20,7 +20,7 @@ describe("Sidebar", () => {
       "aria-current",
       "page",
     );
-    expect(screen.getByRole("link", { name: /Calendrier/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Mes taches/ })).toHaveAttribute(
       "href",
       "/tasks/my",
     );

@@ -1,3 +1,4 @@
+import { TaskDashboard } from "../../../components/tasks/task-dashboard";
 import { TaskWorkspace } from "../../../components/tasks/task-workspace";
 
 export default function TasksPage() {
@@ -11,6 +12,7 @@ export default function TasksPage() {
           </p>
         </div>
       </div>
+      <TaskDashboard />
       <TaskWorkspace />
     </>
   );

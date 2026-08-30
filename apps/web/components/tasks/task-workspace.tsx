@@ -28,9 +28,11 @@ import {
   completeTask,
   createTask,
   createTaskGroup,
+  updateTaskGroup,
 } from "../../lib/api/tasks";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Modal } from "../ui/modal";
 import { TaskPriority as TaskPriorityBadge } from "./task-priority";
 import { TaskStatus as TaskStatusBadge } from "./task-status";
 
@@ -74,6 +76,10 @@ export function TaskWorkspace() {
   const [responsible, setResponsible] = useState("all");
   const [sortBy, setSortBy] = useState("dueDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [openMenuGroupId, setOpenMenuGroupId] = useState<string | null>(null);
+  const [renameGroup, setRenameGroup] = useState<TaskGroup | null>(null);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
     setGroups(loadedGroups);
@@ -110,12 +116,15 @@ export function TaskWorkspace() {
         .sort((a, b) => compareTasks(a, b, sortBy, sortOrder)),
     [allTasks, quickFilter, responsible, search, sortBy, sortOrder, status],
   );
-  const overdueCount = allTasks.filter((task) => task.isOverdue).length;
   const completionLabel = selectedGroup
     ? `${selectedGroup.completedTasks} / ${selectedGroup.totalTasks} taches terminees`
     : "0 / 0 tache terminee";
 
   const groupForm = useForm<GroupFormValues>({
+    defaultValues: { description: "", name: "" },
+    mode: "onChange",
+  });
+  const renameForm = useForm<GroupFormValues>({
     defaultValues: { description: "", name: "" },
     mode: "onChange",
   });
@@ -137,6 +146,7 @@ export function TaskWorkspace() {
     setGroups((current) => [optimistic, ...current]);
     setSelectedGroupId(optimistic.id);
     groupForm.reset();
+    setIsGroupModalOpen(false);
 
     try {
       const created = await createTaskGroup(values);
@@ -176,6 +186,7 @@ export function TaskWorkspace() {
       status: "TODO",
       title: "",
     });
+    setIsTaskModalOpen(false);
 
     try {
       const created = await createTask(payload);
@@ -202,6 +213,38 @@ export function TaskWorkspace() {
 
     try {
       await archiveTaskGroup(groupId);
+    } catch {
+      // Fallback local volontaire.
+    }
+  }
+
+  function openRenameGroup(group: TaskGroup) {
+    setOpenMenuGroupId(null);
+    renameForm.reset({
+      description: group.description ?? "",
+      name: group.name,
+    });
+    setRenameGroup(group);
+  }
+
+  async function handleRenameGroup(values: GroupFormValues) {
+    if (!renameGroup) {
+      return;
+    }
+
+    const groupId = renameGroup.id;
+    setGroups((current) =>
+      current.map((group) =>
+        group.id === groupId ? { ...group, ...values } : group,
+      ),
+    );
+    setRenameGroup(null);
+
+    try {
+      const updated = await updateTaskGroup(groupId, values);
+      setGroups((current) =>
+        current.map((group) => (group.id === groupId ? updated : group)),
+      );
     } catch {
       // Fallback local volontaire.
     }
@@ -240,13 +283,15 @@ export function TaskWorkspace() {
 
   return (
     <div className="tasks-workspace">
-      <section className="task-kpis">
-        <Metric label="Groupes actifs" value={groups.length} />
-        <Metric label="Taches" value={allTasks.length} />
-        <Metric label="Terminees" value={selectedGroup?.completedTasks ?? 0} />
-        <Metric label="En retard" value={overdueCount} tone="danger" />
-      </section>
-
+      {openMenuGroupId ? (
+        <button
+          aria-hidden="true"
+          className="dropdown-backdrop"
+          onClick={() => setOpenMenuGroupId(null)}
+          tabIndex={-1}
+          type="button"
+        />
+      ) : null}
       <div className="tasks-layout">
         <aside className="task-groups-panel">
           <div className="panel-heading">
@@ -255,49 +300,75 @@ export function TaskWorkspace() {
           </div>
           <div className="task-group-list">
             {groups.map((group) => (
-              <button
+              <div
                 className={`task-group-button ${
                   group.id === selectedGroupId ? "is-active" : ""
                 }`}
                 key={group.id}
-                onClick={() => setSelectedGroupId(group.id)}
-                type="button"
               >
-                <strong>{group.name}</strong>
-                <span>
-                  {group.completedTasks}/{group.totalTasks} terminees
-                </span>
-                <span className="progress-track">
-                  <span style={{ width: `${group.progress}%` }} />
-                </span>
-              </button>
+                <button
+                  className="task-group-select"
+                  onClick={() => setSelectedGroupId(group.id)}
+                  type="button"
+                >
+                  <strong>{group.name}</strong>
+                  <span>
+                    {group.completedTasks}/{group.totalTasks} terminees
+                  </span>
+                  <span className="progress-track">
+                    <span style={{ width: `${group.progress}%` }} />
+                  </span>
+                </button>
+                <div className="task-group-menu">
+                  <button
+                    aria-label={`Options du groupe ${group.name}`}
+                    className="icon-button"
+                    onClick={() =>
+                      setOpenMenuGroupId((current) =>
+                        current === group.id ? null : group.id,
+                      )
+                    }
+                    type="button"
+                  >
+                    <MoreVertical size={15} />
+                  </button>
+                  {openMenuGroupId === group.id ? (
+                    <div className="dropdown-menu" role="menu">
+                      <button
+                        onClick={() => openRenameGroup(group)}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Renommer
+                      </button>
+                      {group.status !== "ARCHIVED" ? (
+                        <button
+                          onClick={() => {
+                            setOpenMenuGroupId(null);
+                            handleArchiveGroup(group.id);
+                          }}
+                          role="menuitem"
+                          type="button"
+                        >
+                          Archiver
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             ))}
           </div>
-          <form
-            className="task-inline-form"
-            onSubmit={groupForm.handleSubmit(handleCreateGroup)}
+          <Button
+            onClick={() => {
+              groupForm.reset({ description: "", name: "" });
+              setIsGroupModalOpen(true);
+            }}
+            type="button"
           >
-            <Input
-              error={groupForm.formState.errors.name?.message}
-              label="Nouveau groupe"
-              placeholder="Immatriculation Tigilabs"
-              {...groupForm.register("name", {
-                required: "Le nom est obligatoire.",
-              })}
-            />
-            <label className="field">
-              <span>Description</span>
-              <textarea
-                placeholder="Contexte du groupe"
-                rows={3}
-                {...groupForm.register("description")}
-              />
-            </label>
-            <Button type="submit">
-              <Plus size={17} />
-              Creer
-            </Button>
-          </form>
+            <Plus size={17} />
+            Creer un groupe
+          </Button>
         </aside>
 
         <main className="task-main-panel">
@@ -316,11 +387,19 @@ export function TaskWorkspace() {
                   </div>
                   <div className="task-header-actions">
                     <Button
-                      onClick={() =>
-                        document
-                          .getElementById("task-create-title")
-                          ?.scrollIntoView({ block: "start" })
-                      }
+                      disabled={!selectedGroup}
+                      onClick={() => {
+                        taskForm.reset({
+                          assignedToId: "",
+                          description: "",
+                          dueDate: "",
+                          priority: "MEDIUM",
+                          startDate: toDateInput(new Date().toISOString()),
+                          status: "TODO",
+                          title: "",
+                        });
+                        setIsTaskModalOpen(true);
+                      }}
                       type="button"
                     >
                       <Plus size={17} />
@@ -472,93 +551,139 @@ export function TaskWorkspace() {
             </section>
           )}
         </main>
+      </div>
 
-        <aside className="task-create-panel">
-          <h3 id="task-create-title">Nouvelle tache</h3>
-          <form
-            className="form"
-            onSubmit={taskForm.handleSubmit(handleCreateTask)}
-          >
-            <Input
-              error={taskForm.formState.errors.title?.message}
-              label="Intitule"
-              placeholder="Deposer le dossier"
-              {...taskForm.register("title", {
-                required: "L'intitule est obligatoire.",
-              })}
+      <Modal
+        onClose={() => setIsGroupModalOpen(false)}
+        open={isGroupModalOpen}
+        title="Creer un groupe"
+      >
+        <form
+          className="form"
+          onSubmit={groupForm.handleSubmit(handleCreateGroup)}
+        >
+          <Input
+            error={groupForm.formState.errors.name?.message}
+            label="Nom du groupe"
+            placeholder="Immatriculation Tigilabs"
+            {...groupForm.register("name", {
+              required: "Le nom est obligatoire.",
+            })}
+          />
+          <label className="field">
+            <span>Description</span>
+            <textarea
+              placeholder="Contexte du groupe"
+              rows={3}
+              {...groupForm.register("description")}
             />
+          </label>
+          <Button type="submit">
+            <Plus size={17} />
+            Creer
+          </Button>
+        </form>
+      </Modal>
+
+      <Modal
+        onClose={() => setIsTaskModalOpen(false)}
+        open={isTaskModalOpen}
+        title="Nouvelle tache"
+      >
+        <form
+          className="form"
+          onSubmit={taskForm.handleSubmit(handleCreateTask)}
+        >
+          <Input
+            error={taskForm.formState.errors.title?.message}
+            label="Intitule"
+            placeholder="Deposer le dossier"
+            {...taskForm.register("title", {
+              required: "L'intitule est obligatoire.",
+            })}
+          />
+          <label className="field">
+            <span>Details</span>
+            <textarea
+              placeholder="Contexte et resultat attendu"
+              rows={4}
+              {...taskForm.register("description")}
+            />
+          </label>
+          <div className="two-columns">
+            <Input
+              label="Date de debut"
+              type="date"
+              {...taskForm.register("startDate")}
+            />
+            <Input
+              label="Date de fin prevue"
+              type="date"
+              {...taskForm.register("dueDate")}
+            />
+          </div>
+          <label className="field">
+            <span>Responsable</span>
+            <select {...taskForm.register("assignedToId")}>
+              <option value="">Sans responsable</option>
+              {activeUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="two-columns">
             <label className="field">
-              <span>Details</span>
-              <textarea
-                placeholder="Contexte et resultat attendu"
-                rows={4}
-                {...taskForm.register("description")}
-              />
-            </label>
-            <div className="two-columns">
-              <Input
-                label="Date de debut"
-                type="date"
-                {...taskForm.register("startDate")}
-              />
-              <Input
-                label="Date de fin prevue"
-                type="date"
-                {...taskForm.register("dueDate")}
-              />
-            </div>
-            <label className="field">
-              <span>Responsable</span>
-              <select {...taskForm.register("assignedToId")}>
-                <option value="">Sans responsable</option>
-                {activeUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
+              <span>Priorite</span>
+              <select {...taskForm.register("priority")}>
+                <option value="LOW">Basse</option>
+                <option value="MEDIUM">Normale</option>
+                <option value="HIGH">Haute</option>
+                <option value="URGENT">Urgente</option>
               </select>
             </label>
-            <div className="two-columns">
-              <label className="field">
-                <span>Priorite</span>
-                <select {...taskForm.register("priority")}>
-                  <option value="LOW">Basse</option>
-                  <option value="MEDIUM">Normale</option>
-                  <option value="HIGH">Haute</option>
-                  <option value="URGENT">Urgente</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Statut</span>
-                <select {...taskForm.register("status")}>
-                  <option value="TODO">A faire</option>
-                  <option value="IN_PROGRESS">En cours</option>
-                  <option value="BLOCKED">Bloquee</option>
-                  <option value="DONE">Terminee</option>
-                </select>
-              </label>
-            </div>
-            <Button disabled={!selectedGroup} type="submit">
-              <CalendarDays size={17} />
-              Ajouter
-            </Button>
-          </form>
-        </aside>
-      </div>
-    </div>
-  );
-}
+            <label className="field">
+              <span>Statut</span>
+              <select {...taskForm.register("status")}>
+                <option value="TODO">A faire</option>
+                <option value="IN_PROGRESS">En cours</option>
+                <option value="BLOCKED">Bloquee</option>
+                <option value="DONE">Terminee</option>
+              </select>
+            </label>
+          </div>
+          <Button disabled={!selectedGroup} type="submit">
+            <CalendarDays size={17} />
+            Ajouter
+          </Button>
+        </form>
+      </Modal>
 
-function Metric({
-  label,
-  tone,
-  value,
-}: Readonly<{ label: string; tone?: "danger"; value: number }>) {
-  return (
-    <article className={`metric ${tone === "danger" ? "metric-danger" : ""}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
+      <Modal
+        onClose={() => setRenameGroup(null)}
+        open={Boolean(renameGroup)}
+        title="Renommer le groupe"
+      >
+        <form
+          className="form"
+          onSubmit={renameForm.handleSubmit(handleRenameGroup)}
+        >
+          <Input
+            error={renameForm.formState.errors.name?.message}
+            label="Nom"
+            {...renameForm.register("name", {
+              required: "Le nom est obligatoire.",
+            })}
+          />
+          <label className="field">
+            <span>Description</span>
+            <textarea rows={3} {...renameForm.register("description")} />
+          </label>
+          <Button type="submit">Enregistrer</Button>
+        </form>
+      </Modal>
+    </div>
   );
 }
 

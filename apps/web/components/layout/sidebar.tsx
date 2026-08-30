@@ -38,8 +38,15 @@ export function Sidebar() {
 }
 
 function isActive(pathname: string, href: string, id: string) {
-  if (id === "groups" || id === "calendar" || id === "reports") {
+  if (id === "reports") {
     return false;
+  }
+
+  if (id === "tasks") {
+    return (
+      pathname === "/tasks" ||
+      (pathname.startsWith("/tasks/") && !pathname.startsWith("/tasks/my"))
+    );
   }
 
   if (href === "/dashboard") {
