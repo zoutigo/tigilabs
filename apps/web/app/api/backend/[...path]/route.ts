@@ -52,6 +52,10 @@ export function POST(
   return proxy(request, context);
 }
 
+export function PUT(request: Request, context: { params: { path: string[] } }) {
+  return proxy(request, context);
+}
+
 export function PATCH(
   request: Request,
   context: { params: { path: string[] } },
