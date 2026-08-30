@@ -6,6 +6,7 @@ import {
   LayoutList,
   ScrollText,
   Settings,
+  ShieldCheck,
   UserCheck,
   Users,
 } from "lucide-react";
@@ -15,6 +16,7 @@ export type NavLink = {
   icon: LucideIcon;
   id: string;
   label: string;
+  permission?: string;
 };
 
 export type NavEntry = NavLink & {
@@ -48,7 +50,29 @@ export const privateNavLinks: NavEntry[] = [
     id: "tasks",
     label: "Taches",
   },
-  { href: "/users", icon: Users, id: "users", label: "Utilisateurs" },
+  {
+    children: [
+      {
+        href: "/users",
+        icon: Users,
+        id: "users-list",
+        label: "Liste des utilisateurs",
+        permission: "user.manage",
+      },
+      {
+        href: "/users/roles",
+        icon: ShieldCheck,
+        id: "users-roles",
+        label: "Roles et permissions",
+        permission: "role.manage",
+      },
+    ],
+    href: "/users",
+    icon: Users,
+    id: "users",
+    label: "Utilisateurs",
+    permission: "user.manage",
+  },
   { href: "/dashboard", icon: ScrollText, id: "reports", label: "Rapports" },
   { href: "/settings", icon: Settings, id: "settings", label: "Parametres" },
   {
@@ -75,6 +99,17 @@ export function isChildActive(pathname: string, child: NavLink) {
     );
   }
 
+  if (child.id === "users-roles") {
+    return pathname.startsWith("/users/roles");
+  }
+
+  if (child.id === "users-list") {
+    return (
+      pathname === "/users" ||
+      (pathname.startsWith("/users/") && !pathname.startsWith("/users/roles"))
+    );
+  }
+
   return pathname === child.href || pathname.startsWith(`${child.href}/`);
 }
 
@@ -88,4 +123,24 @@ export function isFlatActive(pathname: string, href: string, id: string) {
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export function filterNavLinksByPermissions(
+  links: NavEntry[],
+  permissions: string[] = [],
+): NavEntry[] {
+  return links
+    .filter((item) => !item.permission || permissions.includes(item.permission))
+    .map((item) =>
+      item.children
+        ? {
+            ...item,
+            children: item.children.filter(
+              (child) =>
+                !child.permission || permissions.includes(child.permission),
+            ),
+          }
+        : item,
+    )
+    .filter((item) => !item.children || item.children.length > 0);
 }

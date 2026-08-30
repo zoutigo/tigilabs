@@ -25,3 +25,10 @@ export function initialsFor(
 export function roleLabelFor(user: Pick<User, "role" | "roles">) {
   return user.role ?? user.roles?.[0] ?? "Membre";
 }
+
+export function hasPermission(
+  user: Pick<User, "permissions">,
+  permission: string,
+) {
+  return user.permissions?.includes(permission) ?? false;
+}

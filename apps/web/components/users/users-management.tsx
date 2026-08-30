@@ -1,182 +1,150 @@
 "use client";
 
-import { ShieldCheck, UserPlus } from "lucide-react";
+import { Users as UsersIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
 import type { User, UserStatus } from "@tigilabs/types";
 import { useRoles, useUsers } from "../../hooks/use-users";
-import { createUser } from "../../lib/api/users";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { UserCard } from "./user-card";
+import { updateUser } from "../../lib/api/users";
+import { useToast } from "../ui/toast";
 
-type UserFormValues = {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  name: string;
-  password: string;
-  role: string;
-  status: UserStatus;
-};
+const statusOptions: Array<{ label: string; value: UserStatus }> = [
+  { label: "Actif", value: "ACTIVE" },
+  { label: "Invite", value: "INVITED" },
+  { label: "Desactive", value: "DISABLED" },
+];
 
 export function UsersManagement() {
   const { users: loadedUsers } = useUsers();
   const { roles } = useRoles();
   const [users, setUsers] = useState<User[]>(loadedUsers);
-  const {
-    formState: { errors, isSubmitting },
-    handleSubmit,
-    register,
-    reset,
-    setFocus,
-  } = useForm<UserFormValues>({
-    defaultValues: {
-      email: "",
-      firstName: "",
-      lastName: "",
-      name: "",
-      password: "",
-      role: "Member",
-      status: "INVITED",
-    },
-    mode: "onChange",
-  });
+  const { toast } = useToast();
 
   useEffect(() => {
     setUsers(loadedUsers);
   }, [loadedUsers]);
 
-  async function onSubmit(values: UserFormValues) {
-    const payload = {
-      ...values,
-      roles: values.role ? [values.role] : [],
-    };
-    const optimistic: User = {
-      id: `user-${Date.now()}`,
-      email: values.email,
-      firstName: values.firstName,
-      lastName: values.lastName,
-      name: values.name,
-      role: values.role,
-      roles: payload.roles,
-      status: values.status,
-    };
-
-    setUsers((current) => [optimistic, ...current]);
-    reset();
+  async function handleStatusChange(user: User, status: UserStatus) {
+    const previous = user.status;
+    setUsers((current) =>
+      current.map((item) => (item.id === user.id ? { ...item, status } : item)),
+    );
 
     try {
-      const created = await createUser(payload);
+      await updateUser(user.id, { status });
+      toast({
+        title: `Statut de ${user.name} mis a jour.`,
+        variant: "success",
+      });
+    } catch (error) {
       setUsers((current) =>
-        current.map((user) => (user.id === optimistic.id ? created : user)),
+        current.map((item) =>
+          item.id === user.id ? { ...item, status: previous } : item,
+        ),
       );
-    } catch {
-      // Fallback local volontaire.
+      toast({
+        description: error instanceof Error ? error.message : undefined,
+        title: "La mise a jour du statut a echoue.",
+        variant: "error",
+      });
     }
   }
 
-  function onInvalid(fields: typeof errors) {
-    const firstField = Object.keys(fields)[0] as
-      keyof UserFormValues | undefined;
-    if (firstField) {
-      setFocus(firstField);
+  async function handleRoleChange(user: User, roleName: string) {
+    const previousRoles = user.roles;
+    const previousRole = user.role;
+    const nextRoles = roleName ? [roleName] : [];
+    setUsers((current) =>
+      current.map((item) =>
+        item.id === user.id
+          ? { ...item, role: roleName || undefined, roles: nextRoles }
+          : item,
+      ),
+    );
+
+    try {
+      await updateUser(user.id, { roles: nextRoles });
+      toast({ title: `Role de ${user.name} mis a jour.`, variant: "success" });
+    } catch (error) {
+      setUsers((current) =>
+        current.map((item) =>
+          item.id === user.id
+            ? { ...item, role: previousRole, roles: previousRoles }
+            : item,
+        ),
+      );
+      toast({
+        description: error instanceof Error ? error.message : undefined,
+        title: "La mise a jour du role a echoue.",
+        variant: "error",
+      });
     }
   }
 
   return (
-    <div className="users-layout">
-      <section className="users-list-panel">
-        <div className="panel-heading">
-          <h3>
-            <ShieldCheck size={18} />
-            Roles et permissions
-          </h3>
-          <span className="badge badge-neutral">{roles.length} roles</span>
-        </div>
-        <div className="roles-grid">
-          {roles.map((role) => (
-            <article className="role-card" key={role.id}>
-              <strong>{role.name}</strong>
-              <p className="muted">{role.description ?? "Role interne"}</p>
-              <div className="role-permissions">
-                {(role.permissions ?? []).slice(0, 6).map(({ permission }) => (
-                  <span className="badge badge-neutral" key={permission.id}>
-                    {permission.subject}.{permission.action}
-                  </span>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-        <div className="grid" style={{ marginTop: 18 }}>
-          {users.map((user) => (
-            <UserCard key={user.id} user={user} />
-          ))}
-        </div>
-      </section>
-
-      <aside className="user-create-panel">
+    <section className="card">
+      <div className="panel-heading">
         <h3>
-          <UserPlus size={18} />
-          Nouvel utilisateur
+          <UsersIcon size={18} />
+          Utilisateurs
         </h3>
-        <form className="form" onSubmit={handleSubmit(onSubmit, onInvalid)}>
-          <Input
-            error={errors.name?.message}
-            label="Nom affiche"
-            placeholder="Valery Tigilabs"
-            {...register("name", { required: "Le nom est obligatoire." })}
-          />
-          <div className="two-columns">
-            <Input label="Prenom" {...register("firstName")} />
-            <Input label="Nom" {...register("lastName")} />
-          </div>
-          <Input
-            error={errors.email?.message}
-            label="Email"
-            placeholder="valery@tigilabs.com"
-            type="email"
-            {...register("email", { required: "L'email est obligatoire." })}
-          />
-          <Input
-            error={errors.password?.message}
-            label="Mot de passe provisoire"
-            type="password"
-            {...register("password", {
-              minLength: {
-                message: "Le mot de passe doit contenir 8 caracteres.",
-                value: 8,
-              },
-              required: "Le mot de passe est obligatoire.",
-            })}
-          />
-          <div className="two-columns">
-            <label className="field">
-              <span>Role</span>
-              <select {...register("role")}>
-                {roles.map((role) => (
-                  <option key={role.id} value={role.name}>
-                    {role.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="field">
-              <span>Statut</span>
-              <select {...register("status")}>
-                <option value="ACTIVE">Actif</option>
-                <option value="INVITED">Invite</option>
-                <option value="DISABLED">Desactive</option>
-              </select>
-            </label>
-          </div>
-          <Button disabled={isSubmitting} type="submit">
-            <UserPlus size={17} />
-            Creer
-          </Button>
-        </form>
-      </aside>
-    </div>
+        <span className="badge badge-neutral">{users.length} comptes</span>
+      </div>
+
+      <div className="task-table-wrap">
+        <table className="task-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prenom</th>
+              <th>Email</th>
+              <th>Statut</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id}>
+                <td>
+                  <strong>{user.lastName ?? user.name}</strong>
+                </td>
+                <td data-label="Prenom">{user.firstName ?? "-"}</td>
+                <td data-label="Email">{user.email}</td>
+                <td data-label="Statut">
+                  <select
+                    aria-label={`Statut de ${user.name}`}
+                    onChange={(event) =>
+                      handleStatusChange(user, event.target.value as UserStatus)
+                    }
+                    value={user.status}
+                  >
+                    {statusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+                <td data-label="Role">
+                  <select
+                    aria-label={`Role de ${user.name}`}
+                    onChange={(event) =>
+                      handleRoleChange(user, event.target.value)
+                    }
+                    value={user.role ?? user.roles?.[0] ?? ""}
+                  >
+                    <option value="">Aucun</option>
+                    {roles.map((role) => (
+                      <option key={role.id} value={role.name}>
+                        {role.name}
+                      </option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

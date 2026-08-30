@@ -4,10 +4,12 @@ import { LogOut, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useCurrentUser } from "../../hooks/use-current-user";
 import { logout } from "../../lib/api/auth";
 import { Button } from "../ui/button";
 import { TigilabsLogo } from "./brand-logo";
 import {
+  filterNavLinksByPermissions,
   isChildActive,
   isFlatActive,
   isGroupActive,
@@ -17,7 +19,12 @@ import {
 export function MobileMenu() {
   const router = useRouter();
   const pathname = usePathname();
+  const { user } = useCurrentUser();
   const [open, setOpen] = useState(false);
+  const navLinks = filterNavLinksByPermissions(
+    privateNavLinks,
+    user.permissions,
+  );
 
   async function handleLogout() {
     await logout();
@@ -58,7 +65,7 @@ export function MobileMenu() {
             </div>
 
             <nav aria-label="Navigation mobile" className="mobile-menu-nav">
-              {privateNavLinks.map((item) =>
+              {navLinks.map((item) =>
                 item.children ? (
                   <div className="mobile-menu-nav-group" key={item.id}>
                     <span

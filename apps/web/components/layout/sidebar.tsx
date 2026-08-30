@@ -6,6 +6,7 @@ import { useCurrentUser } from "../../hooks/use-current-user";
 import { initialsFor, roleLabelFor } from "../../lib/utils";
 import { TigilabsLogo } from "./brand-logo";
 import {
+  filterNavLinksByPermissions,
   isChildActive,
   isFlatActive,
   isGroupActive,
@@ -15,12 +16,16 @@ import {
 export function Sidebar() {
   const pathname = usePathname();
   const { user } = useCurrentUser();
+  const navLinks = filterNavLinksByPermissions(
+    privateNavLinks,
+    user.permissions,
+  );
 
   return (
     <aside className="sidebar">
       <TigilabsLogo href="/dashboard" />
       <nav aria-label="Navigation interne">
-        {privateNavLinks.map((item) =>
+        {navLinks.map((item) =>
           item.children ? (
             <div className="sidebar-nav-group" key={item.id}>
               <span

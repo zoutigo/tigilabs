@@ -1,4 +1,4 @@
-import type { Role, User } from "@tigilabs/types";
+import type { Permission, Role, User, UserStatus } from "@tigilabs/types";
 import { apiClient } from "./client";
 
 export const mockUsers: User[] = [
@@ -16,6 +16,7 @@ export const mockUsers: User[] = [
       "user.read",
       "user.create",
       "user.manage",
+      "role.manage",
     ],
     status: "ACTIVE",
   },
@@ -47,18 +48,31 @@ export function getRoles() {
   return apiClient<Role[]>("/roles");
 }
 
-export function createUser(payload: {
-  email: string;
-  firstName?: string;
-  lastName?: string;
-  name: string;
-  password: string;
-  roles?: string[];
-  status?: "ACTIVE" | "INVITED" | "DISABLED";
-}) {
-  return apiClient<User>("/users", {
+export function getPermissions() {
+  return apiClient<Permission[]>("/roles/permissions");
+}
+
+export function createRole(payload: { name: string; description?: string }) {
+  return apiClient<Role>("/roles", {
     body: JSON.stringify(payload),
     method: "POST",
+  });
+}
+
+export function updateRole(
+  id: string,
+  payload: Partial<{ name: string; description: string }>,
+) {
+  return apiClient<Role>(`/roles/${id}`, {
+    body: JSON.stringify(payload),
+    method: "PATCH",
+  });
+}
+
+export function setRolePermissions(id: string, permissionIds: string[]) {
+  return apiClient<Role>(`/roles/${id}/permissions`, {
+    body: JSON.stringify({ permissionIds }),
+    method: "PUT",
   });
 }
 
@@ -68,7 +82,7 @@ export function updateUser(
     email: string;
     name: string;
     roles: string[];
-    status: "ACTIVE" | "INVITED" | "DISABLED";
+    status: UserStatus;
   }>,
 ) {
   return apiClient<User>(`/users/${id}`, {

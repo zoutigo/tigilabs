@@ -36,6 +36,10 @@ function titleFromPath(pathname: string) {
     return "Taches";
   }
 
+  if (pathname.startsWith("/users/roles")) {
+    return "Roles et permissions";
+  }
+
   if (pathname.startsWith("/users")) {
     return "Utilisateurs";
   }

@@ -33,6 +33,11 @@ const PERMISSIONS: Array<{
     action: "assign",
     description: "Assigner une tache a un utilisateur",
   },
+  {
+    subject: "role",
+    action: "manage",
+    description: "Gerer les roles et leurs permissions",
+  },
 ];
 
 const ADMIN_ROLE_NAME = "ADMIN";

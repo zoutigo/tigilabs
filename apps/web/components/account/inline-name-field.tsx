@@ -17,6 +17,7 @@ type InlineNameFieldProps = {
   label: string;
   value: string;
   onSave: (value: string) => Promise<void>;
+  successMessage?: string;
 };
 
 export function InlineNameField({
@@ -24,6 +25,7 @@ export function InlineNameField({
   label,
   value,
   onSave,
+  successMessage = "Profil mis a jour.",
 }: Readonly<InlineNameFieldProps>) {
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
@@ -51,7 +53,7 @@ export function InlineNameField({
     try {
       await onSave(values.value);
       setIsEditing(false);
-      toast({ title: "Profil mis a jour.", variant: "success" });
+      toast({ title: successMessage, variant: "success" });
     } catch (error) {
       toast({
         description: error instanceof Error ? error.message : undefined,
