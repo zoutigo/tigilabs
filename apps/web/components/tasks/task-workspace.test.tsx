@@ -107,6 +107,30 @@ const groups: TaskGroup[] = [
     ],
     totalTasks: 1,
   },
+  {
+    archivedAt: null,
+    completedTasks: 1,
+    createdAt: "2026-05-22T12:00:00.000Z",
+    createdById: admin.id,
+    description: "Archives cloturees.",
+    id: "group-legal",
+    name: "Conformite legale",
+    overdueTasks: 0,
+    progress: 100,
+    status: "ACTIVE",
+    tasks: [
+      {
+        dueDate: "2026-04-01T12:00:00.000Z",
+        groupId: "group-legal",
+        id: "task-legal",
+        priority: "LOW",
+        startDate: "2026-03-01T12:00:00.000Z",
+        status: "DONE",
+        title: "Deposer les statuts finaux",
+      } as Task,
+    ],
+    totalTasks: 1,
+  },
 ];
 
 const opsTaskDetail: Task = {
@@ -212,6 +236,62 @@ describe("TaskWorkspace", () => {
     expect(
       screen.getByRole("link", { name: /Nouvelle tache/ }),
     ).toHaveAttribute("href", "/tasks/new?group=group-incorporation");
+  });
+
+  it("shows non-completed groups by default and hides fully completed ones", () => {
+    renderWorkspace();
+
+    expect(
+      screen.getByRole("button", { name: /^Immatriculation/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^Operations/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Conformite legale/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /2 en cours.*1 terminees/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("lets the user switch the group list to completed groups only", () => {
+    renderWorkspace();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /2 en cours.*1 terminees/ }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Termines" }));
+
+    expect(
+      screen.getByRole("button", { name: /^Conformite legale/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Immatriculation/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /^Operations/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows an empty message when no group matches the completion filter", () => {
+    const pendingOnlyGroups = groups.filter(
+      (group) => group.id !== "group-legal",
+    );
+    taskGroupsHook.useTaskGroups.mockImplementation(() => ({
+      groups: pendingOnlyGroups,
+    }));
+
+    renderWorkspace();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /2 en cours.*0 terminees/ }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Termines" }));
+
+    expect(
+      screen.getByText("Aucun groupe termine pour le moment."),
+    ).toBeInTheDocument();
   });
 
   it("keeps the group creation form hidden until its trigger is clicked", () => {

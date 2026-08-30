@@ -4,6 +4,7 @@ import {
   AlignLeft,
   Archive,
   CheckCircle2,
+  ChevronDown,
   CircleAlert,
   Columns3,
   ListFilter,
@@ -42,6 +43,18 @@ type GroupFormValues = {
   description?: string;
 };
 
+type GroupCompletionFilter = "pending" | "done" | "all";
+
+function isGroupDone(group: TaskGroup) {
+  return group.totalTasks > 0 && group.completedTasks === group.totalTasks;
+}
+
+const groupFilterLabels: Record<GroupCompletionFilter, string> = {
+  all: "Tous",
+  done: "Termines",
+  pending: "Non termines",
+};
+
 const priorityRank: Record<TaskPriority, number> = {
   LOW: 1,
   MEDIUM: 2,
@@ -75,6 +88,9 @@ export function TaskWorkspace({
   const [openMenuGroupId, setOpenMenuGroupId] = useState<string | null>(null);
   const [renameGroup, setRenameGroup] = useState<TaskGroup | null>(null);
   const [isGroupFormOpen, setIsGroupFormOpen] = useState(false);
+  const [groupFilter, setGroupFilter] =
+    useState<GroupCompletionFilter>("pending");
+  const [isGroupFilterOpen, setIsGroupFilterOpen] = useState(false);
 
   useEffect(() => {
     setGroups(loadedGroups);
@@ -115,6 +131,15 @@ export function TaskWorkspace({
   }, [selectedGroupId]);
 
   const activeUsers = users.filter((user) => user.status === "ACTIVE");
+  const doneGroupsCount = groups.filter((group) => isGroupDone(group)).length;
+  const pendingGroupsCount = groups.length - doneGroupsCount;
+  const visibleGroups = groups.filter((group) => {
+    if (groupFilter === "all") {
+      return true;
+    }
+
+    return groupFilter === "done" ? isGroupDone(group) : !isGroupDone(group);
+  });
   const selectedGroup =
     groups.find((group) => group.id === selectedGroupId) ?? groups[0];
   const allTasks = selectedGroup?.tasks ?? [];
@@ -283,8 +308,48 @@ export function TaskWorkspace({
             <h3>Groupes</h3>
             <span className="badge badge-neutral">{groups.length}</span>
           </div>
+          <button
+            aria-expanded={isGroupFilterOpen}
+            className="task-group-filter-toggle"
+            onClick={() => setIsGroupFilterOpen((current) => !current)}
+            type="button"
+          >
+            <span>{pendingGroupsCount} en cours</span>
+            <span className="task-group-filter-sep" />
+            <span>{doneGroupsCount} terminees</span>
+            <ChevronDown
+              className={
+                isGroupFilterOpen ? "task-group-filter-chevron is-open" : ""
+              }
+              size={15}
+            />
+          </button>
+          {isGroupFilterOpen ? (
+            <div className="task-group-filter-options" role="radiogroup">
+              {(["pending", "done", "all"] as GroupCompletionFilter[]).map(
+                (option) => (
+                  <button
+                    aria-pressed={groupFilter === option}
+                    className={groupFilter === option ? "is-active" : undefined}
+                    key={option}
+                    onClick={() => setGroupFilter(option)}
+                    type="button"
+                  >
+                    {groupFilterLabels[option]}
+                  </button>
+                ),
+              )}
+            </div>
+          ) : null}
           <div className="task-group-list">
-            {groups.map((group) => (
+            {visibleGroups.length === 0 ? (
+              <p className="muted task-group-list-empty">
+                {groupFilter === "done"
+                  ? "Aucun groupe termine pour le moment."
+                  : "Aucun groupe non termine pour le moment."}
+              </p>
+            ) : null}
+            {visibleGroups.map((group) => (
               <div
                 className={`task-group-button ${
                   group.id === selectedGroupId ? "is-active" : ""

@@ -767,6 +767,88 @@ textarea {
   margin-top: 16px;
 }
 
+.task-group-list {
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  max-height: 340px;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+.task-group-list-empty {
+  grid-column: 1 / -1;
+  padding: 6px 2px;
+}
+
+.task-group-filter-toggle {
+  align-items: center;
+  background: var(--panel-muted);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.task-group-filter-sep {
+  background: var(--line);
+  border-radius: 999px;
+  flex: 0 0 auto;
+  height: 4px;
+  width: 4px;
+}
+
+.task-group-filter-toggle svg {
+  margin-left: auto;
+}
+
+.task-group-filter-chevron {
+  transition: transform 0.15s ease;
+}
+
+.task-group-filter-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.task-group-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.task-group-filter-options button {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+}
+
+.task-group-filter-options button.is-active {
+  background: var(--soft-blue);
+  border-color: var(--primary);
+  color: var(--primary-strong);
+}
+
+.task-group-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.task-group-list::-webkit-scrollbar-thumb {
+  background: var(--line-soft);
+  border-radius: 999px;
+}
+
 .task-group-button {
   background: var(--panel-muted);
   border: 1px solid var(--line);
