@@ -19,7 +19,11 @@
     "prisma:generate": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma generate --schema prisma/schema.prisma \"$@\"' --",
     "prisma:migrate": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma migrate dev --schema prisma/schema.prisma \"$@\"' --",
     "prisma:migrate:deploy": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma migrate deploy --schema prisma/schema.prisma \"$@\"' --",
-    "prisma:studio": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma studio --schema prisma/schema.prisma \"$@\"' --"
+    "prisma:studio": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; prisma studio --schema prisma/schema.prisma \"$@\"' --",
+    "prisma:seed": "sh -c 'if [ -f docker/.env ]; then set -a; . docker/.env; set +a; elif [ -f .env ]; then set -a; . .env; set +a; fi; ts-node --project apps/api/tsconfig.json prisma/seed.ts'"
+  },
+  "prisma": {
+    "seed": "ts-node --project apps/api/tsconfig.json prisma/seed.ts"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.18.0",
@@ -27,6 +31,7 @@
     "eslint": "^9.16.0",
     "prettier": "^3.3.3",
     "prisma": "^5.22.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
   },
   "dependencies": {

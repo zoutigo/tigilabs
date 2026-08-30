@@ -9,7 +9,7 @@ import {
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   asChild?: boolean;
   children?: ReactNode;
-  variant?: "primary" | "secondary" | "ghost";
+  variant?: "primary" | "secondary" | "ghost" | "danger";
 };
 
 export function Button({
@@ -23,6 +23,7 @@ export function Button({
     "tl-button",
     variant === "secondary" ? "tl-button-secondary" : "",
     variant === "ghost" ? "tl-button-ghost" : "",
+    variant === "danger" ? "tl-button-danger" : "",
     className ?? "",
   ]
     .filter(Boolean)

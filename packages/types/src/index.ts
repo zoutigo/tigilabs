@@ -3,6 +3,7 @@ export type UserStatus = "ACTIVE" | "INVITED" | "DISABLED";
 export type User = {
   id: string;
   email: string;
+  pendingEmail?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   name: string;
@@ -10,6 +11,7 @@ export type User = {
   roles?: string[];
   permissions?: string[];
   status: UserStatus;
+  emailVerifiedAt?: string | null;
 };
 
 export type Permission = {
@@ -119,4 +121,42 @@ export type AuthSession = {
   accessToken: string;
   refreshToken: string;
   user: User;
+};
+
+export type UpdateProfilePayload = Partial<{
+  firstName: string;
+  lastName: string;
+}>;
+
+export type ChangeEmailPayload = {
+  newEmail: string;
+  currentPassword: string;
+};
+
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
+};
+
+export type ContactMessageStatus = "NEW" | "READ" | "ARCHIVED";
+
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  subject?: string | null;
+  message: string;
+  status: ContactMessageStatus;
+  createdAt: string;
+  readAt?: string | null;
+};
+
+export type SiteSettings = {
+  companyName: string;
+  ownerName: string;
+  contactEmail: string;
+  contactPhone: string;
+  address?: string | null;
+  privacyPolicy: string;
 };

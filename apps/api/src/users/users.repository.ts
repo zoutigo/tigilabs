@@ -8,10 +8,12 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 const publicUserSelection = {
   id: true,
   email: true,
+  pendingEmail: true,
   firstName: true,
   lastName: true,
   name: true,
   status: true,
+  emailVerifiedAt: true,
   createdAt: true,
   updatedAt: true,
   roles: {
@@ -36,6 +38,26 @@ export class UsersRepository {
     return this.prisma.user.findUnique({
       where: { id },
       select: publicUserSelection,
+    });
+  }
+
+  findApprovers() {
+    return this.prisma.user.findMany({
+      where: {
+        status: "ACTIVE",
+        roles: {
+          some: {
+            role: {
+              permissions: {
+                some: {
+                  permission: { subject: "user", action: "manage" },
+                },
+              },
+            },
+          },
+        },
+      },
+      select: { id: true, email: true, firstName: true, name: true },
     });
   }
 

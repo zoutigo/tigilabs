@@ -1,36 +1,70 @@
-import Link from "next/link";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { Clock, Mail, Phone, User } from "lucide-react";
+import type { SiteSettings } from "@tigilabs/types";
+import { ContactForm } from "../../../components/contact/contact-form";
+import { Reveal } from "../../../components/ui/reveal";
+import { getPublicSiteSettings } from "../../../lib/api/settings";
 
-export default function ContactPage() {
+const FALLBACK_SETTINGS: SiteSettings = {
+  companyName: "Tigilabs",
+  ownerName: "Direction Tigilabs",
+  contactEmail: "contact@tigilabs.com",
+  contactPhone: "+237 600 000 000",
+  privacyPolicy: "",
+};
+
+export default async function ContactPage() {
+  const settings = await getPublicSiteSettings().catch(() => FALLBACK_SETTINGS);
+
   return (
-    <main className="public-shell">
-      <nav className="public-nav">
-        <Link className="brand" href="/">
-          Tigilabs
-        </Link>
-        <div className="nav-links">
-          <Link href="/solutions/scolive">Solutions</Link>
-          <Link href="/about">A propos</Link>
-        </div>
-      </nav>
-      <section className="section">
-        <h1>Contact</h1>
-        <p>Présentez votre besoin et l'équipe Tigilabs reviendra vers vous.</p>
-        <form className="card form">
-          <Input label="Nom" name="name" placeholder="Votre nom" />
-          <Input
-            label="Email"
-            name="email"
-            placeholder="vous@entreprise.com"
-            type="email"
-          />
-          <label className="form">
-            <span>Message</span>
-            <textarea name="message" rows={5} placeholder="Votre besoin" />
-          </label>
-          <Button type="submit">Envoyer</Button>
-        </form>
+    <main>
+      <section className="section contact-section">
+        <Reveal className="contact-info">
+          <span className="eyebrow">Contact</span>
+          <h1>Parlons de votre projet</h1>
+          <p className="muted">
+            Presentez votre besoin et l&apos;equipe Tigilabs revient vers vous
+            rapidement.
+          </p>
+
+          <div className="contact-info-card">
+            <span className="contact-info-item">
+              <User size={17} aria-hidden="true" />
+              <span>
+                <strong>Responsable</strong>
+                <span>{settings.ownerName}</span>
+              </span>
+            </span>
+            <span className="contact-info-item">
+              <Mail size={17} aria-hidden="true" />
+              <span>
+                <strong>Email</strong>
+                <a href={`mailto:${settings.contactEmail}`}>
+                  {settings.contactEmail}
+                </a>
+              </span>
+            </span>
+            <span className="contact-info-item">
+              <Phone size={17} aria-hidden="true" />
+              <span>
+                <strong>Telephone</strong>
+                <a href={`tel:${settings.contactPhone.replace(/\s+/g, "")}`}>
+                  {settings.contactPhone}
+                </a>
+              </span>
+            </span>
+            <span className="contact-info-item">
+              <Clock size={17} aria-hidden="true" />
+              <span>
+                <strong>Reponse</strong>
+                <span>Sous 1 a 2 jours ouvres</span>
+              </span>
+            </span>
+          </div>
+        </Reveal>
+
+        <Reveal className="card contact-form-card" delay={100}>
+          <ContactForm />
+        </Reveal>
       </section>
     </main>
   );

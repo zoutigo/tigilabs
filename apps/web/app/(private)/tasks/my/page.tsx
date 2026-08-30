@@ -1,7 +1,9 @@
 "use client";
 
 import { Clock3, CheckCircle2, CircleAlert, ListTodo } from "lucide-react";
+import Link from "next/link";
 import { TaskList } from "../../../../components/tasks/task-list";
+import { Metric } from "../../../../components/tasks/task-metric";
 import { useMyTasks } from "../../../../hooks/use-tasks";
 
 export default function MyTasksPage() {
@@ -34,14 +36,47 @@ export default function MyTasksPage() {
 
   return (
     <>
-      <div className="toolbar">
-        <div>
-          <h2>Mes taches</h2>
-          <p className="muted">
-            Toutes les taches qui me sont affectees, tous groupes confondus.
-          </p>
-        </div>
+      <div className="breadcrumbs">
+        <Link href="/tasks">Taches</Link>
+        <span>/</span>
+        <span>Mes taches</span>
       </div>
+      <div className="toolbar">
+        <p className="muted">
+          Toutes les taches qui me sont affectees, tous groupes confondus.
+        </p>
+      </div>
+
+      <section className="task-kpis">
+        <Metric
+          icon={Clock3}
+          label="A traiter aujourd'hui"
+          subtitle="Taches"
+          value={todayTasks.length}
+        />
+        <Metric
+          icon={CircleAlert}
+          label="En retard"
+          subtitle="Taches"
+          tone="danger"
+          value={overdueTasks.length}
+        />
+        <Metric
+          icon={ListTodo}
+          label="A venir"
+          subtitle="Taches"
+          tone="blue"
+          value={upcomingTasks.length}
+        />
+        <Metric
+          icon={CheckCircle2}
+          label="Terminees"
+          subtitle="Recemment"
+          tone="success"
+          value={recentlyDone.length}
+        />
+      </section>
+
       <div className="my-tasks-grid">
         <TaskBucket
           icon={Clock3}

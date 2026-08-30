@@ -23,10 +23,7 @@ export function TaskCard({ task }: Readonly<{ task: Task }>) {
             : "Aucune"}
         </p>
       </div>
-      <div
-        className="button-row"
-        style={{ justifyContent: "flex-end", marginTop: 0 }}
-      >
+      <div className="button-row task-card-badges">
         {task.isOverdue ? (
           <span className="badge badge-danger">En retard</span>
         ) : null}

@@ -16,6 +16,7 @@ enum UserStatus {
 enum AuthTokenType {
   EMAIL_CONFIRMATION
   PASSWORD_RESET
+  EMAIL_CHANGE
 }
 
 enum TaskStatus {
@@ -43,13 +44,15 @@ enum TaskGroupStatus {
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
+  pendingEmail String?
   firstName    String?
   lastName     String?
   name         String
-  passwordHash String
-  status       UserStatus @default(INVITED)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  passwordHash    String
+  status          UserStatus @default(INVITED)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
   roles            UserRole[]
   authTokens       AuthToken[]
@@ -62,6 +65,7 @@ model User {
   comments         Comment[]
   notifications    Notification[]
   auditLogs        AuditLog[]
+  readContactMessages ContactMessage[]
 }
 
 model AuthToken {
@@ -231,4 +235,38 @@ model AuditLog {
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model SiteSettings {
+  id            String   @id @default(cuid())
+  companyName   String   @default("Tigilabs")
+  ownerName     String
+  contactEmail  String
+  contactPhone  String
+  address       String?
+  privacyPolicy String
+  updatedAt     DateTime @updatedAt
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  ARCHIVED
+}
+
+model ContactMessage {
+  id        String               @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String
+  status    ContactMessageStatus @default(NEW)
+  ipAddress String?
+  createdAt DateTime             @default(now())
+  readAt    DateTime?
+
+  readById String?
+  readBy   User?   @relation(fields: [readById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
 }

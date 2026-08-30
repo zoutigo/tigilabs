@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { AuthShell } from "../../../components/layout/auth-shell";
 import { Button } from "../../../components/ui/button";
 import { confirmEmail } from "../../../lib/api/auth";
 
 export default function ConfirmEmailPage() {
   return (
-    <Suspense fallback={<ConfirmEmailFallback />}>
-      <ConfirmEmailContent />
-    </Suspense>
+    <AuthShell>
+      <Suspense fallback={<ConfirmEmailFallback />}>
+        <ConfirmEmailContent />
+      </Suspense>
+    </AuthShell>
   );
 }
 
@@ -43,33 +46,23 @@ function ConfirmEmailContent() {
   }, [token]);
 
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
-        <h1>Confirmation email</h1>
-        <p className={status === "error" ? "form-error" : "form-success"}>
-          {message}
-        </p>
-        <Button asChild>
-          <Link href="/login">Aller a la connexion</Link>
-        </Button>
-      </section>
-    </main>
+    <section className="card auth-shell-card">
+      <h1>Confirmation email</h1>
+      <p className={status === "error" ? "form-error" : "form-success"}>
+        {message}
+      </p>
+      <Button asChild>
+        <Link href="/login">Aller a la connexion</Link>
+      </Button>
+    </section>
   );
 }
 
 function ConfirmEmailFallback() {
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
-        <h1>Confirmation email</h1>
-        <p className="muted">Confirmation en cours...</p>
-      </section>
-    </main>
+    <section className="card auth-shell-card">
+      <h1>Confirmation email</h1>
+      <p className="muted">Confirmation en cours...</p>
+    </section>
   );
 }

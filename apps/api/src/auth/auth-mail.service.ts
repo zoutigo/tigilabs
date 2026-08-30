@@ -8,6 +8,14 @@ type AuthMailPayload = {
   url: string;
 };
 
+type AdminNewUserNotificationPayload = {
+  to: string;
+  adminName: string;
+  newUserName: string;
+  newUserEmail: string;
+  url: string;
+};
+
 @Injectable()
 export class AuthMailService {
   constructor(private readonly configService: ConfigService) {}
@@ -71,6 +79,53 @@ export class AuthMailService {
         actionLabel: "Changer mon mot de passe",
         actionUrl: payload.url,
         footer: "Ce lien expire dans 1 heure.",
+      }),
+    });
+  }
+
+  async sendEmailChangeConfirmation(payload: AuthMailPayload) {
+    await this.sendMail({
+      to: payload.to,
+      subject: "Tigilabs - Confirmez votre nouvelle adresse email",
+      text: [
+        `Bonjour ${payload.name},`,
+        "",
+        "Confirmez votre nouvelle adresse email pour l'associer a votre compte Tigilabs.",
+        payload.url,
+        "",
+        "Ce lien expire dans 1 heure. Si vous n'etes pas a l'origine de cette demande, ignorez cet email.",
+      ].join("\n"),
+      html: this.renderActionEmail({
+        title: "Confirmez votre nouvelle adresse email",
+        greeting: `Bonjour ${payload.name},`,
+        body: "Confirmez votre nouvelle adresse email pour l'associer a votre compte Tigilabs.",
+        actionLabel: "Confirmer ma nouvelle adresse",
+        actionUrl: payload.url,
+        footer:
+          "Ce lien expire dans 1 heure. Si vous n'etes pas a l'origine de cette demande, ignorez cet email.",
+      }),
+    });
+  }
+
+  async sendAdminNewUserNotification(payload: AdminNewUserNotificationPayload) {
+    await this.sendMail({
+      to: payload.to,
+      subject: "Tigilabs - Nouvelle inscription a valider",
+      text: [
+        `Bonjour ${payload.adminName},`,
+        "",
+        `${payload.newUserName} (${payload.newUserEmail}) vient de creer un compte Tigilabs.`,
+        "Rendez-vous dans l'espace interne pour valider ce compte avant qu'il puisse se connecter.",
+        payload.url,
+      ].join("\n"),
+      html: this.renderActionEmail({
+        title: "Nouvelle inscription a valider",
+        greeting: `Bonjour ${payload.adminName},`,
+        body: `${payload.newUserName} (${payload.newUserEmail}) vient de creer un compte Tigilabs. Rendez-vous dans l'espace interne pour valider ce compte avant qu'il puisse se connecter.`,
+        actionLabel: "Valider les utilisateurs",
+        actionUrl: payload.url,
+        footer:
+          "Cet utilisateur ne pourra pas se connecter tant que son compte n'est pas valide.",
       }),
     });
   }

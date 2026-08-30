@@ -238,6 +238,10 @@ export function getTaskGroups() {
   return apiClient<TaskGroup[]>("/tasks/groups");
 }
 
+export function getTaskGroup(id: string) {
+  return apiClient<TaskGroup>(`/tasks/groups/${id}`);
+}
+
 export function getTasks(query = "") {
   return apiClient<Task[]>(`/tasks${query}`);
 }
@@ -257,6 +261,16 @@ export function createTaskGroup(payload: {
   return apiClient<TaskGroup>("/tasks/groups", {
     body: JSON.stringify(payload),
     method: "POST",
+  });
+}
+
+export function updateTaskGroup(
+  id: string,
+  payload: { name?: string; description?: string },
+) {
+  return apiClient<TaskGroup>(`/tasks/groups/${id}`, {
+    body: JSON.stringify(payload),
+    method: "PATCH",
   });
 }
 
@@ -313,6 +327,10 @@ export function addTaskProgress(id: string, content: string) {
     body: JSON.stringify({ content }),
     method: "POST",
   });
+}
+
+export function deleteTask(id: string) {
+  return apiClient<void>(`/tasks/${id}`, { method: "DELETE" });
 }
 
 export function getDashboard() {

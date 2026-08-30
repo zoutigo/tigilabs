@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { AuthShell } from "../../../components/layout/auth-shell";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { forgotPassword } from "../../../lib/api/auth";
@@ -38,14 +39,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
+    <AuthShell>
+      <section className="card auth-shell-card">
         <h1>Reinitialisation</h1>
         <p className="muted">
-          Recevez un lien de réinitialisation sur votre adresse professionnelle.
+          Recevez un lien de reinitialisation sur votre adresse professionnelle.
         </p>
         <form className="form" onSubmit={handleSubmit(onSubmit)}>
           <Input
@@ -61,7 +59,12 @@ export default function ForgotPasswordPage() {
             {isSubmitting ? "Envoi..." : "Envoyer le lien"}
           </Button>
         </form>
+        <p>
+          <Link className="muted" href="/login">
+            Retour a la connexion
+          </Link>
+        </p>
       </section>
-    </main>
+    </AuthShell>
   );
 }

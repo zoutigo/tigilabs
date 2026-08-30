@@ -1,7 +1,1 @@
-"use client";
-
-import { mockUsers } from "../lib/api/users";
-
-export function useCurrentUser() {
-  return { user: mockUsers[0] };
-}
+export { useCurrentUser } from "../components/providers/current-user-provider";

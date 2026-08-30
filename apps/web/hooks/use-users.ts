@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Role, User } from "@tigilabs/types";
-import { getRoles, getUsers, mockUsers } from "../lib/api/users";
+import type { Permission, Role, User } from "@tigilabs/types";
+import {
+  getPermissions,
+  getRoles,
+  getUsers,
+  mockUsers,
+} from "../lib/api/users";
 
 export function useUsers() {
   const [users, setUsers] = useState<User[]>(mockUsers);
@@ -43,5 +48,17 @@ export function useRoles() {
       .catch(() => setRoles(fallbackRoles));
   }, []);
 
-  return { roles };
+  return { roles, setRoles };
+}
+
+export function usePermissions() {
+  const [permissions, setPermissions] = useState<Permission[]>([]);
+
+  useEffect(() => {
+    getPermissions()
+      .then(setPermissions)
+      .catch(() => setPermissions([]));
+  }, []);
+
+  return { permissions };
 }

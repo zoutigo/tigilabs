@@ -1,12 +1,16 @@
 "use client";
 
 import { LogOut } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCurrentUser } from "../../hooks/use-current-user";
 import { logout } from "../../lib/api/auth";
+import { initialsFor, roleLabelFor } from "../../lib/utils";
 import { Button } from "../ui/button";
 
 export function UserMenu() {
   const router = useRouter();
+  const { user } = useCurrentUser();
 
   async function handleLogout() {
     await logout();
@@ -16,13 +20,19 @@ export function UserMenu() {
 
   return (
     <div className="user-menu">
-      <span className="avatar avatar-photo" aria-hidden="true">
-        VM
-      </span>
-      <span className="user-menu-copy">
-        <strong>Valery M.</strong>
-        <small>Administrateur</small>
-      </span>
+      <Link
+        aria-label="Mon compte"
+        className="user-menu-identity"
+        href="/account"
+      >
+        <span className="avatar avatar-photo" aria-hidden="true">
+          {initialsFor(user)}
+        </span>
+        <span className="user-menu-copy">
+          <strong>{user.name}</strong>
+          <small>{roleLabelFor(user)}</small>
+        </span>
+      </Link>
       <Button
         aria-label="Deconnexion"
         onClick={handleLogout}

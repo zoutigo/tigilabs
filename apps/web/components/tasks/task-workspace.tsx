@@ -1,15 +1,17 @@
 "use client";
 
 import {
+  AlignLeft,
   Archive,
-  CalendarDays,
   CheckCircle2,
+  ChevronDown,
   CircleAlert,
   Columns3,
   ListFilter,
   MoreVertical,
   Plus,
   Search,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -19,18 +21,20 @@ import type {
   TaskGroup,
   TaskPriority,
   TaskStatus,
-  User,
 } from "@tigilabs/types";
 import { useTaskGroups } from "../../hooks/use-tasks";
 import { useUsers } from "../../hooks/use-users";
 import {
   archiveTaskGroup,
   completeTask,
-  createTask,
   createTaskGroup,
+  getTaskGroup,
+  updateTaskGroup,
 } from "../../lib/api/tasks";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
+import { Modal } from "../ui/modal";
+import { useToast } from "../ui/toast";
 import { TaskPriority as TaskPriorityBadge } from "./task-priority";
 import { TaskStatus as TaskStatusBadge } from "./task-status";
 
@@ -39,14 +43,16 @@ type GroupFormValues = {
   description?: string;
 };
 
-type TaskFormValues = {
-  title: string;
-  description?: string;
-  startDate?: string;
-  dueDate?: string;
-  priority: TaskPriority;
-  status: TaskStatus;
-  assignedToId?: string;
+type GroupCompletionFilter = "pending" | "done" | "all";
+
+function isGroupDone(group: TaskGroup) {
+  return group.totalTasks > 0 && group.completedTasks === group.totalTasks;
+}
+
+const groupFilterLabels: Record<GroupCompletionFilter, string> = {
+  all: "Tous",
+  done: "Termines",
+  pending: "Non termines",
 };
 
 const priorityRank: Record<TaskPriority, number> = {
@@ -63,25 +69,88 @@ const statusLabels: Record<TaskStatus, string> = {
   DONE: "Terminees",
 };
 
-export function TaskWorkspace() {
+export function TaskWorkspace({
+  initialGroupId,
+}: Readonly<{ initialGroupId?: string }>) {
   const { groups: loadedGroups } = useTaskGroups();
   const { users } = useUsers();
+  const { toast } = useToast();
   const [groups, setGroups] = useState<TaskGroup[]>(loadedGroups);
-  const [selectedGroupId, setSelectedGroupId] = useState(loadedGroups[0]?.id);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>(
+    initialGroupId,
+  );
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<"ALL" | TaskStatus>("ALL");
   const [quickFilter, setQuickFilter] = useState("all");
   const [responsible, setResponsible] = useState("all");
   const [sortBy, setSortBy] = useState("dueDate");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [openMenuGroupId, setOpenMenuGroupId] = useState<string | null>(null);
+  const [renameGroup, setRenameGroup] = useState<TaskGroup | null>(null);
+  const [isGroupFormOpen, setIsGroupFormOpen] = useState(false);
+  const [groupFilter, setGroupFilter] =
+    useState<GroupCompletionFilter>("pending");
+  const [isGroupFilterOpen, setIsGroupFilterOpen] = useState(false);
 
   useEffect(() => {
-    setGroups(loadedGroups);
-    setSelectedGroupId((current) => current ?? loadedGroups[0]?.id);
-  }, [loadedGroups]);
+    setGroups((current) =>
+      loadedGroups.map((incoming) => {
+        const existing = current.find((group) => group.id === incoming.id);
+        // The group list only carries a lightweight task summary
+        // (id/status/dueDate). Keep whatever full task detail we already
+        // fetched for this group instead of clobbering it back to the
+        // summary every time the group list is refetched.
+        return existing ? { ...incoming, tasks: existing.tasks } : incoming;
+      }),
+    );
+    setSelectedGroupId((current) =>
+      loadedGroups.some((group) => group.id === current)
+        ? current
+        : (loadedGroups.find((group) => group.id === initialGroupId)?.id ??
+          loadedGroups[0]?.id),
+    );
+  }, [initialGroupId, loadedGroups]);
+
+  useEffect(() => {
+    if (!selectedGroupId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    getTaskGroup(selectedGroupId)
+      .then((detail) => {
+        if (cancelled) {
+          return;
+        }
+
+        setGroups((current) =>
+          current.map((group) =>
+            group.id === detail.id ? { ...group, ...detail } : group,
+          ),
+        );
+      })
+      .catch(() => {
+        // Le resume charge via la liste des groupes reste affiche.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedGroupId]);
 
   const activeUsers = users.filter((user) => user.status === "ACTIVE");
-  const selectedGroup = groups.find((group) => group.id === selectedGroupId);
+  const doneGroupsCount = groups.filter((group) => isGroupDone(group)).length;
+  const pendingGroupsCount = groups.length - doneGroupsCount;
+  const visibleGroups = groups.filter((group) => {
+    if (groupFilter === "all") {
+      return true;
+    }
+
+    return groupFilter === "done" ? isGroupDone(group) : !isGroupDone(group);
+  });
+  const selectedGroup =
+    groups.find((group) => group.id === selectedGroupId) ?? groups[0];
   const allTasks = selectedGroup?.tasks ?? [];
   const filteredTasks = useMemo(
     () =>
@@ -110,7 +179,6 @@ export function TaskWorkspace() {
         .sort((a, b) => compareTasks(a, b, sortBy, sortOrder)),
     [allTasks, quickFilter, responsible, search, sortBy, sortOrder, status],
   );
-  const overdueCount = allTasks.filter((task) => task.isOverdue).length;
   const completionLabel = selectedGroup
     ? `${selectedGroup.completedTasks} / ${selectedGroup.totalTasks} taches terminees`
     : "0 / 0 tache terminee";
@@ -119,16 +187,8 @@ export function TaskWorkspace() {
     defaultValues: { description: "", name: "" },
     mode: "onChange",
   });
-  const taskForm = useForm<TaskFormValues>({
-    defaultValues: {
-      assignedToId: "",
-      description: "",
-      dueDate: "",
-      priority: "MEDIUM",
-      startDate: toDateInput(new Date().toISOString()),
-      status: "TODO",
-      title: "",
-    },
+  const renameForm = useForm<GroupFormValues>({
+    defaultValues: { description: "", name: "" },
     mode: "onChange",
   });
 
@@ -137,6 +197,7 @@ export function TaskWorkspace() {
     setGroups((current) => [optimistic, ...current]);
     setSelectedGroupId(optimistic.id);
     groupForm.reset();
+    setIsGroupFormOpen(false);
 
     try {
       const created = await createTaskGroup(values);
@@ -144,46 +205,15 @@ export function TaskWorkspace() {
         current.map((group) => (group.id === optimistic.id ? created : group)),
       );
       setSelectedGroupId(created.id);
+      toast({ title: "Groupe cree.", variant: "success" });
     } catch {
       // The local fallback keeps the interface usable without a running API.
-    }
-  }
-
-  async function handleCreateTask(values: TaskFormValues) {
-    if (!selectedGroup) {
-      return;
-    }
-
-    const payload = {
-      ...values,
-      assignedToId: values.assignedToId || null,
-      dueDate: values.dueDate
-        ? new Date(values.dueDate).toISOString()
-        : undefined,
-      groupId: selectedGroup.id,
-      startDate: values.startDate
-        ? new Date(values.startDate).toISOString()
-        : undefined,
-    };
-    const optimistic = buildLocalTask(payload, activeUsers);
-    patchGroupTasks(selectedGroup.id, (tasks) => [optimistic, ...tasks]);
-    taskForm.reset({
-      assignedToId: "",
-      description: "",
-      dueDate: "",
-      priority: "MEDIUM",
-      startDate: toDateInput(new Date().toISOString()),
-      status: "TODO",
-      title: "",
-    });
-
-    try {
-      const created = await createTask(payload);
-      patchGroupTasks(selectedGroup.id, (tasks) =>
-        tasks.map((task) => (task.id === optimistic.id ? created : task)),
-      );
-    } catch {
-      // Fallback local volontaire.
+      toast({
+        description:
+          "Le groupe reste visible localement, la synchronisation reessaiera automatiquement.",
+        title: "Impossible de synchroniser le groupe.",
+        variant: "error",
+      });
     }
   }
 
@@ -202,6 +232,38 @@ export function TaskWorkspace() {
 
     try {
       await archiveTaskGroup(groupId);
+    } catch {
+      // Fallback local volontaire.
+    }
+  }
+
+  function openRenameGroup(group: TaskGroup) {
+    setOpenMenuGroupId(null);
+    renameForm.reset({
+      description: group.description ?? "",
+      name: group.name,
+    });
+    setRenameGroup(group);
+  }
+
+  async function handleRenameGroup(values: GroupFormValues) {
+    if (!renameGroup) {
+      return;
+    }
+
+    const groupId = renameGroup.id;
+    setGroups((current) =>
+      current.map((group) =>
+        group.id === groupId ? { ...group, ...values } : group,
+      ),
+    );
+    setRenameGroup(null);
+
+    try {
+      const updated = await updateTaskGroup(groupId, values);
+      setGroups((current) =>
+        current.map((group) => (group.id === groupId ? updated : group)),
+      );
     } catch {
       // Fallback local volontaire.
     }
@@ -240,64 +302,177 @@ export function TaskWorkspace() {
 
   return (
     <div className="tasks-workspace">
-      <section className="task-kpis">
-        <Metric label="Groupes actifs" value={groups.length} />
-        <Metric label="Taches" value={allTasks.length} />
-        <Metric label="Terminees" value={selectedGroup?.completedTasks ?? 0} />
-        <Metric label="En retard" value={overdueCount} tone="danger" />
-      </section>
-
+      {openMenuGroupId ? (
+        <button
+          aria-hidden="true"
+          className="dropdown-backdrop"
+          onClick={() => setOpenMenuGroupId(null)}
+          tabIndex={-1}
+          type="button"
+        />
+      ) : null}
       <div className="tasks-layout">
         <aside className="task-groups-panel">
           <div className="panel-heading">
             <h3>Groupes</h3>
             <span className="badge badge-neutral">{groups.length}</span>
           </div>
+          <button
+            aria-expanded={isGroupFilterOpen}
+            className="task-group-filter-toggle"
+            onClick={() => setIsGroupFilterOpen((current) => !current)}
+            type="button"
+          >
+            <span>{pendingGroupsCount} en cours</span>
+            <span className="task-group-filter-sep" />
+            <span>{doneGroupsCount} terminees</span>
+            <ChevronDown
+              className={
+                isGroupFilterOpen ? "task-group-filter-chevron is-open" : ""
+              }
+              size={15}
+            />
+          </button>
+          {isGroupFilterOpen ? (
+            <div className="task-group-filter-options" role="radiogroup">
+              {(["pending", "done", "all"] as GroupCompletionFilter[]).map(
+                (option) => (
+                  <button
+                    aria-pressed={groupFilter === option}
+                    className={groupFilter === option ? "is-active" : undefined}
+                    key={option}
+                    onClick={() => setGroupFilter(option)}
+                    type="button"
+                  >
+                    {groupFilterLabels[option]}
+                  </button>
+                ),
+              )}
+            </div>
+          ) : null}
           <div className="task-group-list">
-            {groups.map((group) => (
-              <button
+            {visibleGroups.length === 0 ? (
+              <p className="muted task-group-list-empty">
+                {groupFilter === "done"
+                  ? "Aucun groupe termine pour le moment."
+                  : "Aucun groupe non termine pour le moment."}
+              </p>
+            ) : null}
+            {visibleGroups.map((group) => (
+              <div
                 className={`task-group-button ${
                   group.id === selectedGroupId ? "is-active" : ""
                 }`}
                 key={group.id}
-                onClick={() => setSelectedGroupId(group.id)}
-                type="button"
               >
-                <strong>{group.name}</strong>
-                <span>
-                  {group.completedTasks}/{group.totalTasks} terminees
-                </span>
-                <span className="progress-track">
-                  <span style={{ width: `${group.progress}%` }} />
-                </span>
-              </button>
+                <button
+                  className="task-group-select"
+                  onClick={() => setSelectedGroupId(group.id)}
+                  type="button"
+                >
+                  <strong>{group.name}</strong>
+                  <span>
+                    {group.completedTasks}/{group.totalTasks} terminees
+                  </span>
+                  <span className="progress-track">
+                    <span style={{ width: `${group.progress}%` }} />
+                  </span>
+                </button>
+                <div className="task-group-menu">
+                  <button
+                    aria-label={`Options du groupe ${group.name}`}
+                    className="icon-button"
+                    onClick={() =>
+                      setOpenMenuGroupId((current) =>
+                        current === group.id ? null : group.id,
+                      )
+                    }
+                    type="button"
+                  >
+                    <MoreVertical size={15} />
+                  </button>
+                  {openMenuGroupId === group.id ? (
+                    <div className="dropdown-menu" role="menu">
+                      <button
+                        onClick={() => openRenameGroup(group)}
+                        role="menuitem"
+                        type="button"
+                      >
+                        Renommer
+                      </button>
+                      {group.status !== "ARCHIVED" ? (
+                        <button
+                          onClick={() => {
+                            setOpenMenuGroupId(null);
+                            handleArchiveGroup(group.id);
+                          }}
+                          role="menuitem"
+                          type="button"
+                        >
+                          Archiver
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             ))}
           </div>
-          <form
-            className="task-inline-form"
-            onSubmit={groupForm.handleSubmit(handleCreateGroup)}
-          >
-            <Input
-              error={groupForm.formState.errors.name?.message}
-              label="Nouveau groupe"
-              placeholder="Immatriculation Tigilabs"
-              {...groupForm.register("name", {
-                required: "Le nom est obligatoire.",
-              })}
-            />
-            <label className="field">
-              <span>Description</span>
-              <textarea
-                placeholder="Contexte du groupe"
-                rows={3}
-                {...groupForm.register("description")}
-              />
-            </label>
-            <Button type="submit">
+          {isGroupFormOpen ? (
+            <div className="inline-form-panel">
+              <div className="toolbar">
+                <h3>Creer un groupe</h3>
+                <Button
+                  aria-label="Fermer"
+                  onClick={() => setIsGroupFormOpen(false)}
+                  type="button"
+                  variant="ghost"
+                >
+                  <X size={18} />
+                </Button>
+              </div>
+              <form
+                className="form"
+                onSubmit={groupForm.handleSubmit(handleCreateGroup)}
+              >
+                <Input
+                  error={groupForm.formState.errors.name?.message}
+                  label="Nom du groupe"
+                  placeholder="Immatriculation Tigilabs"
+                  {...groupForm.register("name", {
+                    required: "Le nom est obligatoire.",
+                  })}
+                />
+                <section className="task-description-panel">
+                  <h3>
+                    <AlignLeft size={16} />
+                    Description
+                  </h3>
+                  <textarea
+                    className="description-control"
+                    placeholder="Contexte du groupe"
+                    rows={3}
+                    {...groupForm.register("description")}
+                  />
+                </section>
+                <Button type="submit">
+                  <Plus size={17} />
+                  Creer
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <Button
+              onClick={() => {
+                groupForm.reset({ description: "", name: "" });
+                setIsGroupFormOpen(true);
+              }}
+              type="button"
+            >
               <Plus size={17} />
-              Creer
+              Creer un groupe
             </Button>
-          </form>
+          )}
         </aside>
 
         <main className="task-main-panel">
@@ -315,16 +490,11 @@ export function TaskWorkspace() {
                     <h2>{selectedGroup.name}</h2>
                   </div>
                   <div className="task-header-actions">
-                    <Button
-                      onClick={() =>
-                        document
-                          .getElementById("task-create-title")
-                          ?.scrollIntoView({ block: "start" })
-                      }
-                      type="button"
-                    >
-                      <Plus size={17} />
-                      Nouvelle tache
+                    <Button asChild>
+                      <Link href={`/tasks/new?group=${selectedGroup.id}`}>
+                        <Plus size={17} />
+                        Nouvelle tache
+                      </Link>
                     </Button>
                     <Button
                       aria-label="Options du groupe"
@@ -469,96 +639,56 @@ export function TaskWorkspace() {
             <section className="empty-state">
               <CircleAlert size={22} />
               <p>Aucun groupe actif pour le moment.</p>
+              <p className="muted">
+                Les taches sont rangees dans des groupes : creez un premier
+                groupe pour commencer a ajouter des taches.
+              </p>
+              <Button
+                onClick={() => {
+                  groupForm.reset({ description: "", name: "" });
+                  setIsGroupFormOpen(true);
+                }}
+                type="button"
+              >
+                <Plus size={17} />
+                Creer un groupe
+              </Button>
             </section>
           )}
         </main>
-
-        <aside className="task-create-panel">
-          <h3 id="task-create-title">Nouvelle tache</h3>
-          <form
-            className="form"
-            onSubmit={taskForm.handleSubmit(handleCreateTask)}
-          >
-            <Input
-              error={taskForm.formState.errors.title?.message}
-              label="Intitule"
-              placeholder="Deposer le dossier"
-              {...taskForm.register("title", {
-                required: "L'intitule est obligatoire.",
-              })}
-            />
-            <label className="field">
-              <span>Details</span>
-              <textarea
-                placeholder="Contexte et resultat attendu"
-                rows={4}
-                {...taskForm.register("description")}
-              />
-            </label>
-            <div className="two-columns">
-              <Input
-                label="Date de debut"
-                type="date"
-                {...taskForm.register("startDate")}
-              />
-              <Input
-                label="Date de fin prevue"
-                type="date"
-                {...taskForm.register("dueDate")}
-              />
-            </div>
-            <label className="field">
-              <span>Responsable</span>
-              <select {...taskForm.register("assignedToId")}>
-                <option value="">Sans responsable</option>
-                {activeUsers.map((user) => (
-                  <option key={user.id} value={user.id}>
-                    {user.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="two-columns">
-              <label className="field">
-                <span>Priorite</span>
-                <select {...taskForm.register("priority")}>
-                  <option value="LOW">Basse</option>
-                  <option value="MEDIUM">Normale</option>
-                  <option value="HIGH">Haute</option>
-                  <option value="URGENT">Urgente</option>
-                </select>
-              </label>
-              <label className="field">
-                <span>Statut</span>
-                <select {...taskForm.register("status")}>
-                  <option value="TODO">A faire</option>
-                  <option value="IN_PROGRESS">En cours</option>
-                  <option value="BLOCKED">Bloquee</option>
-                  <option value="DONE">Terminee</option>
-                </select>
-              </label>
-            </div>
-            <Button disabled={!selectedGroup} type="submit">
-              <CalendarDays size={17} />
-              Ajouter
-            </Button>
-          </form>
-        </aside>
       </div>
-    </div>
-  );
-}
 
-function Metric({
-  label,
-  tone,
-  value,
-}: Readonly<{ label: string; tone?: "danger"; value: number }>) {
-  return (
-    <article className={`metric ${tone === "danger" ? "metric-danger" : ""}`}>
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
+      <Modal
+        onClose={() => setRenameGroup(null)}
+        open={Boolean(renameGroup)}
+        title="Renommer le groupe"
+      >
+        <form
+          className="form"
+          onSubmit={renameForm.handleSubmit(handleRenameGroup)}
+        >
+          <Input
+            error={renameForm.formState.errors.name?.message}
+            label="Nom"
+            {...renameForm.register("name", {
+              required: "Le nom est obligatoire.",
+            })}
+          />
+          <section className="task-description-panel">
+            <h3>
+              <AlignLeft size={16} />
+              Description
+            </h3>
+            <textarea
+              className="description-control"
+              rows={3}
+              {...renameForm.register("description")}
+            />
+          </section>
+          <Button type="submit">Enregistrer</Button>
+        </form>
+      </Modal>
+    </div>
   );
 }
 
@@ -663,10 +793,6 @@ function formatDate(value?: string | null) {
   return value ? new Date(value).toLocaleDateString("fr-FR") : "-";
 }
 
-function toDateInput(value?: string | null) {
-  return value ? new Date(value).toISOString().slice(0, 10) : "";
-}
-
 function buildLocalGroup(values: GroupFormValues): TaskGroup {
   const now = new Date().toISOString();
 
@@ -684,48 +810,6 @@ function buildLocalGroup(values: GroupFormValues): TaskGroup {
     completedTasks: 0,
     overdueTasks: 0,
     progress: 0,
-  };
-}
-
-function buildLocalTask(
-  values: {
-    assignedToId?: string | null;
-    description?: string;
-    dueDate?: string;
-    groupId: string;
-    priority?: TaskPriority;
-    startDate?: string;
-    status?: TaskStatus;
-    title: string;
-  },
-  users: User[],
-): Task {
-  const assignedTo =
-    users.find((user) => user.id === values.assignedToId) ?? null;
-  const now = new Date().toISOString();
-
-  return {
-    id: `task-${Date.now()}`,
-    groupId: values.groupId,
-    title: values.title,
-    description: values.description,
-    status: values.status ?? "TODO",
-    priority: values.priority ?? "MEDIUM",
-    startDate: values.startDate ?? now,
-    dueDate: values.dueDate ?? null,
-    completedAt: values.status === "DONE" ? now : null,
-    assignedToId: values.assignedToId,
-    assignedTo,
-    assignee: assignedTo,
-    createdById: "user-admin",
-    createdAt: now,
-    updatedAt: now,
-    isOverdue:
-      Boolean(values.dueDate) &&
-      new Date(values.dueDate as string).getTime() < Date.now() &&
-      values.status !== "DONE",
-    progress: [],
-    history: [],
   };
 }
 

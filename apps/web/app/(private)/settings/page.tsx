@@ -1,19 +1,17 @@
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
+import { RequirePermission } from "../../../components/auth/require-permission";
+import { SiteSettingsForm } from "../../../components/settings/site-settings-form";
 
 export default function SettingsPage() {
   return (
-    <section className="card">
-      <h2>Parametres</h2>
-      <form className="form">
-        <Input label="Nom de l'organisation" defaultValue="Tigilabs" />
-        <Input
-          label="Email de contact"
-          defaultValue="contact@tigilabs.com"
-          type="email"
-        />
-        <Button type="submit">Enregistrer</Button>
-      </form>
-    </section>
+    <RequirePermission permission="settings.manage">
+      <section className="card">
+        <h2>Parametres du site</h2>
+        <p className="muted">
+          Ces informations alimentent le site public (pied de page, page
+          contact, politique de confidentialite).
+        </p>
+        <SiteSettingsForm />
+      </section>
+    </RequirePermission>
   );
 }

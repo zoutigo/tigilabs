@@ -8,10 +8,10 @@ import {
   Loader2,
   MoreVertical,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import type { Task } from "@tigilabs/types";
 import { useTaskDashboard, useTaskGroups } from "../../hooks/use-tasks";
+import { Metric } from "./task-metric";
 import { TaskPriority } from "./task-priority";
 import { TaskStatus } from "./task-status";
 
@@ -97,31 +97,6 @@ export function TaskDashboard() {
         )}
       </section>
     </>
-  );
-}
-
-function Metric({
-  icon: Icon,
-  label,
-  subtitle,
-  tone,
-  value,
-}: Readonly<{
-  icon: LucideIcon;
-  label: string;
-  subtitle: string;
-  tone?: "blue" | "danger" | "success";
-  value: number;
-}>) {
-  return (
-    <article className={`metric ${tone ? `metric-${tone}` : ""}`}>
-      <span className="metric-icon" aria-hidden="true">
-        <Icon size={22} />
-      </span>
-      <span>{label}</span>
-      <strong>{value}</strong>
-      <small>{subtitle}</small>
-    </article>
   );
 }
 

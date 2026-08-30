@@ -34,10 +34,10 @@ function fillRegisterForm() {
     target: { value: "alice@example.com" },
   });
   fireEvent.change(screen.getByLabelText("Mot de passe"), {
-    target: { value: "password123" },
+    target: { value: "Password123!" },
   });
   fireEvent.change(screen.getByLabelText("Confirmation"), {
-    target: { value: "password123" },
+    target: { value: "Password123!" },
   });
 }
 
