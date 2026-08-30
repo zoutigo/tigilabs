@@ -201,6 +201,155 @@ textarea {
   padding: 10px;
 }
 
+.tl-button-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #ffffff;
+}
+
+.tl-button-danger:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.form-message {
+  align-items: flex-start;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  line-height: 1.5;
+  margin: 4px 0 18px;
+  padding: 14px;
+}
+
+.form-message strong {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.form-message p {
+  font-size: 13px;
+  margin: 0;
+}
+
+.form-message-success {
+  background: var(--success-soft-bg);
+  border-color: var(--success-soft-border);
+  color: var(--success-soft-fg-strong);
+}
+
+.form-message-success p {
+  color: var(--success-soft-fg);
+}
+
+.form-message-error {
+  background: var(--soft-red);
+  border-color: #f7b9be;
+  color: #a11d29;
+}
+
+.form-message-error p {
+  color: #b6303c;
+}
+
+.form-message-info {
+  background: var(--soft-blue);
+  border-color: #bcd6ff;
+  color: #1d3f80;
+}
+
+.form-message-info p {
+  color: #2a5099;
+}
+
+.toast-viewport {
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  position: fixed;
+  right: 24px;
+  z-index: 60;
+}
+
+.toast {
+  align-items: flex-start;
+  background: var(--panel);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+}
+
+.toast-content {
+  flex: 1;
+}
+
+.toast-content strong {
+  display: block;
+  font-size: 14px;
+}
+
+.toast-content p {
+  font-size: 13px;
+  margin: 2px 0 0;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 2px;
+}
+
+.toast-success {
+  background: var(--success-soft-bg);
+  border-color: var(--success-soft-border);
+  color: var(--success-soft-fg-strong);
+}
+
+.toast-success .toast-content p {
+  color: var(--success-soft-fg);
+}
+
+.toast-error {
+  background: var(--soft-red);
+  border-color: #f7b9be;
+  color: #a11d29;
+}
+
+.toast-error .toast-content p {
+  color: #b6303c;
+}
+
+.toast-info {
+  background: var(--soft-blue);
+  border-color: #bcd6ff;
+  color: #1d3f80;
+}
+
+.toast-info .toast-content p {
+  color: #2a5099;
+}
+
+.inline-form-panel {
+  background: var(--panel-muted);
+  border-radius: 10px;
+  border: 1px solid var(--line-soft);
+  margin-top: 12px;
+  padding: 14px;
+}
+
+.inline-form-panel .toolbar {
+  margin-bottom: 10px;
+}
+
 .public-shell {
   background: var(--surface-subtle);
   min-height: 100vh;

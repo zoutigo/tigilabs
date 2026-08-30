@@ -329,6 +329,10 @@ export function addTaskProgress(id: string, content: string) {
   });
 }
 
+export function deleteTask(id: string) {
+  return apiClient<void>(`/tasks/${id}`, { method: "DELETE" });
+}
+
 export function getDashboard() {
   return apiClient<{
     mine: {

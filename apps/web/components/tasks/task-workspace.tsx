@@ -10,6 +10,7 @@ import {
   MoreVertical,
   Plus,
   Search,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -34,6 +35,7 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Modal } from "../ui/modal";
+import { useToast } from "../ui/toast";
 import { TaskPriority as TaskPriorityBadge } from "./task-priority";
 import { TaskStatus as TaskStatusBadge } from "./task-status";
 
@@ -69,6 +71,7 @@ const statusLabels: Record<TaskStatus, string> = {
 export function TaskWorkspace() {
   const { groups: loadedGroups } = useTaskGroups();
   const { users } = useUsers();
+  const { toast } = useToast();
   const [groups, setGroups] = useState<TaskGroup[]>(loadedGroups);
   const [selectedGroupId, setSelectedGroupId] = useState(loadedGroups[0]?.id);
   const [search, setSearch] = useState("");
@@ -79,7 +82,7 @@ export function TaskWorkspace() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [openMenuGroupId, setOpenMenuGroupId] = useState<string | null>(null);
   const [renameGroup, setRenameGroup] = useState<TaskGroup | null>(null);
-  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [isGroupFormOpen, setIsGroupFormOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
@@ -175,7 +178,7 @@ export function TaskWorkspace() {
     setGroups((current) => [optimistic, ...current]);
     setSelectedGroupId(optimistic.id);
     groupForm.reset();
-    setIsGroupModalOpen(false);
+    setIsGroupFormOpen(false);
 
     try {
       const created = await createTaskGroup(values);
@@ -183,8 +186,15 @@ export function TaskWorkspace() {
         current.map((group) => (group.id === optimistic.id ? created : group)),
       );
       setSelectedGroupId(created.id);
+      toast({ title: "Groupe cree.", variant: "success" });
     } catch {
       // The local fallback keeps the interface usable without a running API.
+      toast({
+        description:
+          "Le groupe reste visible localement, la synchronisation reessaiera automatiquement.",
+        title: "Impossible de synchroniser le groupe.",
+        variant: "error",
+      });
     }
   }
 
@@ -222,8 +232,15 @@ export function TaskWorkspace() {
       patchGroupTasks(selectedGroup.id, (tasks) =>
         tasks.map((task) => (task.id === optimistic.id ? created : task)),
       );
+      toast({ title: "Tache creee.", variant: "success" });
     } catch {
       // Fallback local volontaire.
+      toast({
+        description:
+          "La tache reste visible localement, la synchronisation reessaiera automatiquement.",
+        title: "Impossible de synchroniser la tache.",
+        variant: "error",
+      });
     }
   }
 
@@ -388,16 +405,57 @@ export function TaskWorkspace() {
               </div>
             ))}
           </div>
-          <Button
-            onClick={() => {
-              groupForm.reset({ description: "", name: "" });
-              setIsGroupModalOpen(true);
-            }}
-            type="button"
-          >
-            <Plus size={17} />
-            Creer un groupe
-          </Button>
+          {isGroupFormOpen ? (
+            <div className="inline-form-panel">
+              <div className="toolbar">
+                <h3>Creer un groupe</h3>
+                <Button
+                  aria-label="Fermer"
+                  onClick={() => setIsGroupFormOpen(false)}
+                  type="button"
+                  variant="ghost"
+                >
+                  <X size={18} />
+                </Button>
+              </div>
+              <form
+                className="form"
+                onSubmit={groupForm.handleSubmit(handleCreateGroup)}
+              >
+                <Input
+                  error={groupForm.formState.errors.name?.message}
+                  label="Nom du groupe"
+                  placeholder="Immatriculation Tigilabs"
+                  {...groupForm.register("name", {
+                    required: "Le nom est obligatoire.",
+                  })}
+                />
+                <label className="field">
+                  <span>Description</span>
+                  <textarea
+                    placeholder="Contexte du groupe"
+                    rows={3}
+                    {...groupForm.register("description")}
+                  />
+                </label>
+                <Button type="submit">
+                  <Plus size={17} />
+                  Creer
+                </Button>
+              </form>
+            </div>
+          ) : (
+            <Button
+              onClick={() => {
+                groupForm.reset({ description: "", name: "" });
+                setIsGroupFormOpen(true);
+              }}
+              type="button"
+            >
+              <Plus size={17} />
+              Creer un groupe
+            </Button>
+          )}
         </aside>
 
         <main className="task-main-panel">
@@ -581,38 +639,6 @@ export function TaskWorkspace() {
           )}
         </main>
       </div>
-
-      <Modal
-        onClose={() => setIsGroupModalOpen(false)}
-        open={isGroupModalOpen}
-        title="Creer un groupe"
-      >
-        <form
-          className="form"
-          onSubmit={groupForm.handleSubmit(handleCreateGroup)}
-        >
-          <Input
-            error={groupForm.formState.errors.name?.message}
-            label="Nom du groupe"
-            placeholder="Immatriculation Tigilabs"
-            {...groupForm.register("name", {
-              required: "Le nom est obligatoire.",
-            })}
-          />
-          <label className="field">
-            <span>Description</span>
-            <textarea
-              placeholder="Contexte du groupe"
-              rows={3}
-              {...groupForm.register("description")}
-            />
-          </label>
-          <Button type="submit">
-            <Plus size={17} />
-            Creer
-          </Button>
-        </form>
-      </Modal>
 
       <Modal
         onClose={() => setIsTaskModalOpen(false)}

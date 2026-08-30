@@ -3,23 +3,37 @@
 import {
   CheckCircle2,
   MoreVertical,
+  Pencil,
   RotateCcw,
   Send,
   Star,
+  Trash2,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import type { Task } from "@tigilabs/types";
+import type {
+  Task,
+  TaskPriority as TaskPriorityValue,
+  TaskStatus as TaskStatusValue,
+} from "@tigilabs/types";
+import { useUsers } from "../../hooks/use-users";
 import {
   addTaskProgress,
   completeTask,
+  deleteTask,
   getTask,
   mockTasks,
   reopenTask,
+  updateTask,
 } from "../../lib/api/tasks";
 import { Button } from "../ui/button";
+import { FormMessage } from "../ui/form-message";
+import { Input } from "../ui/input";
+import { Modal } from "../ui/modal";
+import { useToast } from "../ui/toast";
 import { TaskPriority } from "./task-priority";
 import { TaskStatus } from "./task-status";
 
@@ -27,11 +41,28 @@ type ProgressForm = {
   content: string;
 };
 
+type EditTaskForm = {
+  title: string;
+  description?: string;
+  startDate?: string;
+  dueDate?: string;
+  priority: TaskPriorityValue;
+  status: TaskStatusValue;
+  assignedToId?: string;
+};
+
 export function TaskDetail({ id }: Readonly<{ id: string }>) {
   const router = useRouter();
+  const { toast } = useToast();
+  const { users } = useUsers();
   const [task, setTask] = useState<Task | null>(
     mockTasks.find((item) => item.id === id) ?? null,
   );
+  const [isEditing, setIsEditing] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const {
     formState: { errors, isSubmitting },
     handleSubmit,
@@ -39,6 +70,16 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
     reset,
   } = useForm<ProgressForm>({
     defaultValues: { content: "" },
+    mode: "onChange",
+  });
+  const editForm = useForm<EditTaskForm>({
+    defaultValues: {
+      assignedToId: "",
+      description: "",
+      priority: "MEDIUM",
+      status: "TODO",
+      title: "",
+    },
     mode: "onChange",
   });
 
@@ -53,6 +94,72 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   }
 
   const responsible = task.assignedTo ?? task.assignee;
+  const activeUsers = users.filter((user) => user.status === "ACTIVE");
+
+  function openEdit() {
+    if (!task) {
+      return;
+    }
+
+    setEditError(null);
+    editForm.reset({
+      assignedToId: task.assignedToId ?? "",
+      description: task.description ?? "",
+      dueDate: toDateInput(task.dueDate),
+      priority: task.priority,
+      startDate: toDateInput(task.startDate),
+      status: task.status,
+      title: task.title,
+    });
+    setIsEditing(true);
+  }
+
+  async function onSubmitEdit(values: EditTaskForm) {
+    if (!task) {
+      return;
+    }
+
+    setEditError(null);
+    const payload = {
+      ...values,
+      assignedToId: values.assignedToId || null,
+      dueDate: values.dueDate ? new Date(values.dueDate).toISOString() : null,
+      startDate: values.startDate
+        ? new Date(values.startDate).toISOString()
+        : undefined,
+    };
+
+    try {
+      const updated = await updateTask(task.id, payload);
+      setTask(updated);
+      setIsEditing(false);
+      toast({ title: "Tache mise a jour.", variant: "success" });
+    } catch {
+      setEditError(
+        "La mise a jour n'a pas pu etre enregistree. Verifiez votre connexion et reessayez.",
+      );
+    }
+  }
+
+  async function handleDelete() {
+    if (!task) {
+      return;
+    }
+
+    setDeleteError(null);
+    setIsDeleting(true);
+
+    try {
+      await deleteTask(task.id);
+      toast({ title: "Tache supprimee.", variant: "success" });
+      router.push("/tasks");
+    } catch {
+      setIsDeleting(false);
+      setDeleteError(
+        "La suppression a echoue. Verifiez votre connexion et reessayez.",
+      );
+    }
+  }
 
   async function handleComplete() {
     if (!task) {
@@ -139,6 +246,32 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
               </div>
             </div>
             <div className="task-header-actions">
+              {isEditing ? (
+                <Button
+                  onClick={() => setIsEditing(false)}
+                  type="button"
+                  variant="secondary"
+                >
+                  <X size={17} />
+                  Annuler
+                </Button>
+              ) : (
+                <Button onClick={openEdit} type="button" variant="secondary">
+                  <Pencil size={17} />
+                  Modifier
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setDeleteError(null);
+                  setIsDeleteConfirmOpen(true);
+                }}
+                type="button"
+                variant="danger"
+              >
+                <Trash2 size={17} />
+                Supprimer
+              </Button>
               <button
                 aria-label="Options de la tache"
                 className="icon-button"
@@ -162,28 +295,112 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
         </div>
 
         <div className="task-detail-content">
-          <div className="task-detail-meta">
-            <Info label="Groupe" value={task.group?.name ?? task.groupId} />
-            <Info
-              label="Responsable"
-              value={responsible?.name ?? "Non affecte"}
-            />
-            <div>
-              <span>Priorite</span>
-              <TaskPriority priority={task.priority} />
-            </div>
-            <Info label="Date de debut" value={formatDate(task.startDate)} />
-            <Info label="Date de fin prevue" value={formatDate(task.dueDate)} />
-            <Info
-              label="Date de fin reelle"
-              value={formatDate(task.completedAt)}
-            />
-          </div>
+          {isEditing ? (
+            <section className="inline-form-panel">
+              <h3>Modifier la tache</h3>
+              {editError ? (
+                <FormMessage title="Echec de la mise a jour" variant="error">
+                  {editError}
+                </FormMessage>
+              ) : null}
+              <form
+                className="form"
+                onSubmit={editForm.handleSubmit(onSubmitEdit)}
+              >
+                <Input
+                  error={editForm.formState.errors.title?.message}
+                  label="Intitule"
+                  {...editForm.register("title", {
+                    required: "L'intitule est obligatoire.",
+                  })}
+                />
+                <label className="field">
+                  <span>Details</span>
+                  <textarea rows={4} {...editForm.register("description")} />
+                </label>
+                <div className="two-columns">
+                  <Input
+                    label="Date de debut"
+                    type="date"
+                    {...editForm.register("startDate")}
+                  />
+                  <Input
+                    label="Date de fin prevue"
+                    type="date"
+                    {...editForm.register("dueDate")}
+                  />
+                </div>
+                <label className="field">
+                  <span>Responsable</span>
+                  <select {...editForm.register("assignedToId")}>
+                    <option value="">Sans responsable</option>
+                    {activeUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="two-columns">
+                  <label className="field">
+                    <span>Priorite</span>
+                    <select {...editForm.register("priority")}>
+                      <option value="LOW">Basse</option>
+                      <option value="MEDIUM">Normale</option>
+                      <option value="HIGH">Haute</option>
+                      <option value="URGENT">Urgente</option>
+                    </select>
+                  </label>
+                  <label className="field">
+                    <span>Statut</span>
+                    <select {...editForm.register("status")}>
+                      <option value="TODO">A faire</option>
+                      <option value="IN_PROGRESS">En cours</option>
+                      <option value="BLOCKED">Bloquee</option>
+                      <option value="DONE">Terminee</option>
+                    </select>
+                  </label>
+                </div>
+                <Button
+                  disabled={editForm.formState.isSubmitting}
+                  type="submit"
+                >
+                  Enregistrer
+                </Button>
+              </form>
+            </section>
+          ) : (
+            <>
+              <div className="task-detail-meta">
+                <Info label="Groupe" value={task.group?.name ?? task.groupId} />
+                <Info
+                  label="Responsable"
+                  value={responsible?.name ?? "Non affecte"}
+                />
+                <div>
+                  <span>Priorite</span>
+                  <TaskPriority priority={task.priority} />
+                </div>
+                <Info
+                  label="Date de debut"
+                  value={formatDate(task.startDate)}
+                />
+                <Info
+                  label="Date de fin prevue"
+                  value={formatDate(task.dueDate)}
+                />
+                <Info
+                  label="Date de fin reelle"
+                  value={formatDate(task.completedAt)}
+                />
+              </div>
 
-          <section className="task-description-panel">
-            <h3>Description</h3>
-            <p>{task.description ?? "Aucune description renseignee."}</p>
-          </section>
+              <section className="task-description-panel">
+                <h3>Description</h3>
+                <p>{task.description ?? "Aucune description renseignee."}</p>
+              </section>
+            </>
+          )}
 
           <section className="timeline-section">
             <h3>Avancement</h3>
@@ -253,6 +470,41 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
           }))}
         />
       </aside>
+
+      <Modal
+        onClose={() => setIsDeleteConfirmOpen(false)}
+        open={isDeleteConfirmOpen}
+        title="Supprimer la tache"
+      >
+        {deleteError ? (
+          <FormMessage title="Echec de la suppression" variant="error">
+            {deleteError}
+          </FormMessage>
+        ) : (
+          <FormMessage title="Cette action est definitive." variant="info">
+            La tache « {task.title} » sera supprimee et ne pourra pas etre
+            recuperee.
+          </FormMessage>
+        )}
+        <div className="task-detail-actions">
+          <Button
+            onClick={() => setIsDeleteConfirmOpen(false)}
+            type="button"
+            variant="secondary"
+          >
+            Annuler
+          </Button>
+          <Button
+            disabled={isDeleting}
+            onClick={handleDelete}
+            type="button"
+            variant="danger"
+          >
+            <Trash2 size={17} />
+            Confirmer la suppression
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
@@ -311,6 +563,10 @@ function historyLabel(item: NonNullable<Task["history"]>[number]) {
 
 function formatDate(value?: string | null) {
   return value ? new Date(value).toLocaleDateString("fr-FR") : "-";
+}
+
+function toDateInput(value?: string | null) {
+  return value ? new Date(value).toISOString().slice(0, 10) : "";
 }
 
 function formatDateTime(value: string) {

@@ -7,7 +7,16 @@ import {
 } from "@testing-library/react";
 import type { Task, TaskGroup, User } from "@tigilabs/types";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../ui/toast";
 import { TaskWorkspace } from "./task-workspace";
+
+function renderWorkspace() {
+  return render(
+    <ToastProvider>
+      <TaskWorkspace />
+    </ToastProvider>,
+  );
+}
 
 const apiMocks = vi.hoisted(() => ({
   archiveTaskGroup: vi.fn(),
@@ -131,7 +140,7 @@ describe("TaskWorkspace", () => {
   });
 
   it("renders the responsive task module with tabs, progress and filters", () => {
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     expect(
       screen.getByRole("heading", { name: "Immatriculation" }),
@@ -149,7 +158,7 @@ describe("TaskWorkspace", () => {
   });
 
   it("filters tasks by search text and quick filters", () => {
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     fireEvent.change(
       screen.getByPlaceholderText("Rechercher titre, description, responsable"),
@@ -173,7 +182,7 @@ describe("TaskWorkspace", () => {
   it("marks a task as completed optimistically and calls the API", async () => {
     apiMocks.completeTask.mockRejectedValue(new Error("offline"));
 
-    render(<TaskWorkspace />);
+    renderWorkspace();
     const row = screen.getByRole("row", {
       name: /Ouvrir le compte bancaire/,
     });
@@ -192,7 +201,7 @@ describe("TaskWorkspace", () => {
   });
 
   it("shows the required title error before creating a task", async () => {
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     fireEvent.click(screen.getByRole("button", { name: "Nouvelle tache" }));
     fireEvent.click(screen.getByRole("button", { name: "Ajouter" }));
@@ -208,7 +217,7 @@ describe("TaskWorkspace", () => {
   });
 
   it("keeps the task and group creation forms hidden until their trigger is clicked", () => {
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     expect(
       screen.queryByPlaceholderText("Deposer le dossier"),
@@ -236,7 +245,7 @@ describe("TaskWorkspace", () => {
   it("creates a task optimistically, closes the modal, and keeps the fallback when the API call fails", async () => {
     apiMocks.createTask.mockRejectedValue(new Error("offline"));
 
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     fireEvent.click(screen.getByRole("button", { name: "Nouvelle tache" }));
     fireEvent.change(screen.getByPlaceholderText("Deposer le dossier"), {
@@ -262,7 +271,7 @@ describe("TaskWorkspace", () => {
   it("creates a group optimistically, closes the modal, and keeps the fallback when the API call fails", async () => {
     apiMocks.createTaskGroup.mockRejectedValue(new Error("offline"));
 
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     fireEvent.click(screen.getByRole("button", { name: "Creer un groupe" }));
     fireEvent.change(screen.getByPlaceholderText("Immatriculation Tigilabs"), {
@@ -296,7 +305,7 @@ describe("TaskWorkspace", () => {
         : Promise.reject(new Error("offline")),
     );
 
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     const opsGroupButton = screen.getByText("Operations").closest("button");
     if (!opsGroupButton) {
@@ -314,7 +323,7 @@ describe("TaskWorkspace", () => {
   it("keeps the API failure from wiping out the summary data already loaded from the groups list", async () => {
     apiMocks.getTaskGroup.mockRejectedValue(new Error("offline"));
 
-    render(<TaskWorkspace />);
+    renderWorkspace();
 
     await waitFor(() => {
       expect(apiMocks.getTaskGroup).toHaveBeenCalledWith("group-incorporation");
