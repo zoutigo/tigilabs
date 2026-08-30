@@ -41,6 +41,8 @@ type ProgressForm = {
   content: string;
 };
 
+type DetailTab = "avancement" | "details" | "historique";
+
 type EditTaskForm = {
   title: string;
   description?: string;
@@ -58,6 +60,8 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   const [task, setTask] = useState<Task | null>(
     mockTasks.find((item) => item.id === id) ?? null,
   );
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<DetailTab>("details");
   const [isEditing, setIsEditing] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
@@ -84,12 +88,40 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   });
 
   useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+
     getTask(id)
-      .then(setTask)
-      .catch(() => setTask(mockTasks.find((item) => item.id === id) ?? null));
+      .then((fetched) => {
+        if (!cancelled) {
+          setTask(fetched);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTask(mockTasks.find((item) => item.id === id) ?? null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (!task) {
+    if (isLoading) {
+      return (
+        <section className="empty-state">
+          <p>Chargement de la tache...</p>
+        </section>
+      );
+    }
+
     notFound();
   }
 
@@ -221,7 +253,7 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   }
 
   return (
-    <div className="task-detail-layout">
+    <div className="task-detail-layout" data-active-tab={activeTab}>
       <article className="task-detail-main">
         <div className="task-module-header">
           <div className="breadcrumbs">
@@ -282,127 +314,149 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
             </div>
           </div>
           <div className="task-tabs" role="tablist">
-            <button aria-selected="true" role="tab" type="button">
+            <button
+              aria-selected={activeTab === "details"}
+              onClick={() => setActiveTab("details")}
+              role="tab"
+              type="button"
+            >
               Details
             </button>
-            <button aria-selected="false" role="tab" type="button">
+            <button
+              aria-selected={activeTab === "avancement"}
+              onClick={() => setActiveTab("avancement")}
+              role="tab"
+              type="button"
+            >
               Avancement
             </button>
-            <button aria-selected="false" role="tab" type="button">
+            <button
+              aria-selected={activeTab === "historique"}
+              onClick={() => setActiveTab("historique")}
+              role="tab"
+              type="button"
+            >
               Historique
             </button>
           </div>
         </div>
 
-        <div className="task-detail-content">
-          {isEditing ? (
-            <section className="inline-form-panel">
-              <h3>Modifier la tache</h3>
-              {editError ? (
-                <FormMessage title="Echec de la mise a jour" variant="error">
-                  {editError}
-                </FormMessage>
-              ) : null}
-              <form
-                className="form"
-                onSubmit={editForm.handleSubmit(onSubmitEdit)}
-              >
-                <Input
-                  error={editForm.formState.errors.title?.message}
-                  label="Intitule"
-                  {...editForm.register("title", {
-                    required: "L'intitule est obligatoire.",
-                  })}
-                />
-                <label className="field">
-                  <span>Details</span>
-                  <textarea rows={4} {...editForm.register("description")} />
-                </label>
-                <div className="two-columns">
-                  <Input
-                    label="Date de debut"
-                    type="date"
-                    {...editForm.register("startDate")}
-                  />
-                  <Input
-                    label="Date de fin prevue"
-                    type="date"
-                    {...editForm.register("dueDate")}
-                  />
-                </div>
-                <label className="field">
-                  <span>Responsable</span>
-                  <select {...editForm.register("assignedToId")}>
-                    <option value="">Sans responsable</option>
-                    {activeUsers.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="two-columns">
-                  <label className="field">
-                    <span>Priorite</span>
-                    <select {...editForm.register("priority")}>
-                      <option value="LOW">Basse</option>
-                      <option value="MEDIUM">Normale</option>
-                      <option value="HIGH">Haute</option>
-                      <option value="URGENT">Urgente</option>
-                    </select>
-                  </label>
-                  <label className="field">
-                    <span>Statut</span>
-                    <select {...editForm.register("status")}>
-                      <option value="TODO">A faire</option>
-                      <option value="IN_PROGRESS">En cours</option>
-                      <option value="BLOCKED">Bloquee</option>
-                      <option value="DONE">Terminee</option>
-                    </select>
-                  </label>
-                </div>
-                <Button
-                  disabled={editForm.formState.isSubmitting}
-                  type="submit"
+        <div className={`task-detail-content${isEditing ? " is-editing" : ""}`}>
+          <div className="task-panel task-panel-details">
+            {isEditing ? (
+              <section className="inline-form-panel">
+                <h3>Modifier la tache</h3>
+                {editError ? (
+                  <FormMessage title="Echec de la mise a jour" variant="error">
+                    {editError}
+                  </FormMessage>
+                ) : null}
+                <form
+                  className="form"
+                  onSubmit={editForm.handleSubmit(onSubmitEdit)}
                 >
-                  Enregistrer
-                </Button>
-              </form>
-            </section>
-          ) : (
-            <>
-              <div className="task-detail-meta">
-                <Info label="Groupe" value={task.group?.name ?? task.groupId} />
-                <Info
-                  label="Responsable"
-                  value={responsible?.name ?? "Non affecte"}
-                />
-                <div>
-                  <span>Priorite</span>
-                  <TaskPriority priority={task.priority} />
-                </div>
-                <Info
-                  label="Date de debut"
-                  value={formatDate(task.startDate)}
-                />
-                <Info
-                  label="Date de fin prevue"
-                  value={formatDate(task.dueDate)}
-                />
-                <Info
-                  label="Date de fin reelle"
-                  value={formatDate(task.completedAt)}
-                />
-              </div>
-
-              <section className="task-description-panel">
-                <h3>Description</h3>
-                <p>{task.description ?? "Aucune description renseignee."}</p>
+                  <div className="two-columns">
+                    <Input
+                      error={editForm.formState.errors.title?.message}
+                      label="Intitule"
+                      {...editForm.register("title", {
+                        required: "L'intitule est obligatoire.",
+                      })}
+                    />
+                    <label className="field">
+                      <span>Responsable</span>
+                      <select {...editForm.register("assignedToId")}>
+                        <option value="">Sans responsable</option>
+                        {activeUsers.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                  <label className="field">
+                    <span>Details</span>
+                    <textarea rows={4} {...editForm.register("description")} />
+                  </label>
+                  <div className="two-columns">
+                    <Input
+                      label="Date de debut"
+                      type="date"
+                      {...editForm.register("startDate")}
+                    />
+                    <Input
+                      label="Date de fin prevue"
+                      type="date"
+                      {...editForm.register("dueDate")}
+                    />
+                  </div>
+                  <div className="two-columns">
+                    <label className="field">
+                      <span>Priorite</span>
+                      <select {...editForm.register("priority")}>
+                        <option value="LOW">Basse</option>
+                        <option value="MEDIUM">Normale</option>
+                        <option value="HIGH">Haute</option>
+                        <option value="URGENT">Urgente</option>
+                      </select>
+                    </label>
+                    <label className="field">
+                      <span>Statut</span>
+                      <select {...editForm.register("status")}>
+                        <option value="TODO">A faire</option>
+                        <option value="IN_PROGRESS">En cours</option>
+                        <option value="BLOCKED">Bloquee</option>
+                        <option value="DONE">Terminee</option>
+                      </select>
+                    </label>
+                  </div>
+                  <Button
+                    disabled={editForm.formState.isSubmitting}
+                    type="submit"
+                  >
+                    Enregistrer
+                  </Button>
+                </form>
               </section>
-            </>
-          )}
+            ) : (
+              <>
+                <div className="task-detail-meta">
+                  <Info
+                    label="Groupe"
+                    value={task.group?.name ?? task.groupId}
+                  />
+                  <Info
+                    label="Responsable"
+                    value={responsible?.name ?? "Non affecte"}
+                  />
+                  <div>
+                    <span>Priorite</span>
+                    <TaskPriority priority={task.priority} />
+                  </div>
+                  <Info
+                    label="Date de debut"
+                    value={formatDate(task.startDate)}
+                  />
+                  <Info
+                    label="Date de fin prevue"
+                    value={formatDate(task.dueDate)}
+                  />
+                  <Info
+                    label="Date de fin reelle"
+                    value={formatDate(task.completedAt)}
+                  />
+                </div>
 
-          <section className="timeline-section">
+                <section className="task-description-panel">
+                  <h3>Description</h3>
+                  <p>{task.description ?? "Aucune description renseignee."}</p>
+                </section>
+              </>
+            )}
+          </div>
+
+          <section className="timeline-section task-panel task-panel-avancement">
             <h3>Avancement</h3>
             <Timeline
               empty="Aucune information d'avancement."
@@ -458,7 +512,7 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
         </div>
       </article>
 
-      <aside className="task-history-panel">
+      <aside className="task-history-panel task-panel task-panel-historique">
         <h3>Historique</h3>
         <Timeline
           empty="Aucun changement enregistre."

@@ -45,6 +45,7 @@ type GroupFormValues = {
 };
 
 type TaskFormValues = {
+  groupId: string;
   title: string;
   description?: string;
   startDate?: string;
@@ -165,6 +166,7 @@ export function TaskWorkspace() {
       assignedToId: "",
       description: "",
       dueDate: "",
+      groupId: selectedGroupId ?? "",
       priority: "MEDIUM",
       startDate: toDateInput(new Date().toISOString()),
       status: "TODO",
@@ -198,8 +200,23 @@ export function TaskWorkspace() {
     }
   }
 
+  function openTaskModal() {
+    taskForm.reset({
+      assignedToId: "",
+      description: "",
+      dueDate: "",
+      groupId: selectedGroupId ?? groups[0]?.id ?? "",
+      priority: "MEDIUM",
+      startDate: toDateInput(new Date().toISOString()),
+      status: "TODO",
+      title: "",
+    });
+    setIsTaskModalOpen(true);
+  }
+
   async function handleCreateTask(values: TaskFormValues) {
-    if (!selectedGroup) {
+    const targetGroup = groups.find((group) => group.id === values.groupId);
+    if (!targetGroup) {
       return;
     }
 
@@ -209,17 +226,19 @@ export function TaskWorkspace() {
       dueDate: values.dueDate
         ? new Date(values.dueDate).toISOString()
         : undefined,
-      groupId: selectedGroup.id,
+      groupId: targetGroup.id,
       startDate: values.startDate
         ? new Date(values.startDate).toISOString()
         : undefined,
     };
     const optimistic = buildLocalTask(payload, activeUsers);
-    patchGroupTasks(selectedGroup.id, (tasks) => [optimistic, ...tasks]);
+    patchGroupTasks(targetGroup.id, (tasks) => [optimistic, ...tasks]);
+    setSelectedGroupId(targetGroup.id);
     taskForm.reset({
       assignedToId: "",
       description: "",
       dueDate: "",
+      groupId: targetGroup.id,
       priority: "MEDIUM",
       startDate: toDateInput(new Date().toISOString()),
       status: "TODO",
@@ -229,7 +248,7 @@ export function TaskWorkspace() {
 
     try {
       const created = await createTask(payload);
-      patchGroupTasks(selectedGroup.id, (tasks) =>
+      patchGroupTasks(targetGroup.id, (tasks) =>
         tasks.map((task) => (task.id === optimistic.id ? created : task)),
       );
       toast({ title: "Tache creee.", variant: "success" });
@@ -473,22 +492,7 @@ export function TaskWorkspace() {
                     <h2>{selectedGroup.name}</h2>
                   </div>
                   <div className="task-header-actions">
-                    <Button
-                      disabled={!selectedGroup}
-                      onClick={() => {
-                        taskForm.reset({
-                          assignedToId: "",
-                          description: "",
-                          dueDate: "",
-                          priority: "MEDIUM",
-                          startDate: toDateInput(new Date().toISOString()),
-                          status: "TODO",
-                          title: "",
-                        });
-                        setIsTaskModalOpen(true);
-                      }}
-                      type="button"
-                    >
+                    <Button onClick={openTaskModal} type="button">
                       <Plus size={17} />
                       Nouvelle tache
                     </Button>
@@ -635,6 +639,20 @@ export function TaskWorkspace() {
             <section className="empty-state">
               <CircleAlert size={22} />
               <p>Aucun groupe actif pour le moment.</p>
+              <p className="muted">
+                Les taches sont rangees dans des groupes : creez un premier
+                groupe pour commencer a ajouter des taches.
+              </p>
+              <Button
+                onClick={() => {
+                  groupForm.reset({ description: "", name: "" });
+                  setIsGroupFormOpen(true);
+                }}
+                type="button"
+              >
+                <Plus size={17} />
+                Creer un groupe
+              </Button>
             </section>
           )}
         </main>
@@ -649,6 +667,20 @@ export function TaskWorkspace() {
           className="form"
           onSubmit={taskForm.handleSubmit(handleCreateTask)}
         >
+          <label className="field">
+            <span>Groupe</span>
+            <select
+              {...taskForm.register("groupId", {
+                required: "Le groupe est obligatoire.",
+              })}
+            >
+              {groups.map((group) => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
+          </label>
           <Input
             error={taskForm.formState.errors.title?.message}
             label="Intitule"
@@ -708,7 +740,7 @@ export function TaskWorkspace() {
               </select>
             </label>
           </div>
-          <Button disabled={!selectedGroup} type="submit">
+          <Button disabled={!groups.length} type="submit">
             <CalendarDays size={17} />
             Ajouter
           </Button>

@@ -151,6 +151,34 @@ describe("TaskDetail", () => {
     ).toBeInTheDocument();
   });
 
+  it("switches the active tab and marks the matching data attribute", async () => {
+    apiMocks.getTask.mockResolvedValue(task);
+
+    renderDetail();
+    await screen.findByText("Premiere version redigee.");
+
+    const detailsTab = screen.getByRole("tab", { name: "Details" });
+    const avancementTab = screen.getByRole("tab", { name: "Avancement" });
+    const historiqueTab = screen.getByRole("tab", { name: "Historique" });
+    const layout = detailsTab.closest(".task-detail-layout");
+    if (!layout) {
+      throw new Error("task-detail-layout not found");
+    }
+
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(layout).toHaveAttribute("data-active-tab", "details");
+
+    fireEvent.click(avancementTab);
+    expect(avancementTab).toHaveAttribute("aria-selected", "true");
+    expect(detailsTab).toHaveAttribute("aria-selected", "false");
+    expect(layout).toHaveAttribute("data-active-tab", "avancement");
+
+    fireEvent.click(historiqueTab);
+    expect(historiqueTab).toHaveAttribute("aria-selected", "true");
+    expect(avancementTab).toHaveAttribute("aria-selected", "false");
+    expect(layout).toHaveAttribute("data-active-tab", "historique");
+  });
+
   it("adds progress optimistically and validates empty content", async () => {
     apiMocks.getTask.mockResolvedValue(task);
     apiMocks.addTaskProgress.mockRejectedValue(new Error("offline"));

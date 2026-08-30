@@ -1135,6 +1135,22 @@ textarea {
     align-items: stretch;
     display: grid;
   }
+
+  [data-active-tab] .task-panel {
+    display: none;
+  }
+
+  [data-active-tab="details"] .task-panel-details {
+    display: block;
+  }
+
+  [data-active-tab="avancement"] .task-panel-avancement {
+    display: grid;
+  }
+
+  [data-active-tab="historique"] .task-panel-historique {
+    display: block;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1822,6 +1838,10 @@ textarea {
       1.25fr
     );
   margin-top: 14px;
+}
+
+.task-detail-content.is-editing {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .task-detail-meta {
