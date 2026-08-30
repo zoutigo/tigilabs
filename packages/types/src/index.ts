@@ -3,6 +3,7 @@ export type UserStatus = "ACTIVE" | "INVITED" | "DISABLED";
 export type User = {
   id: string;
   email: string;
+  pendingEmail?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   name: string;
@@ -119,4 +120,20 @@ export type AuthSession = {
   accessToken: string;
   refreshToken: string;
   user: User;
+};
+
+export type UpdateProfilePayload = Partial<{
+  firstName: string;
+  lastName: string;
+}>;
+
+export type ChangeEmailPayload = {
+  newEmail: string;
+  currentPassword: string;
+};
+
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirm: string;
 };

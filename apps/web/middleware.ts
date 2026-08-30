@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-const privateRoutes = ["/dashboard", "/tasks", "/users", "/settings"];
+const privateRoutes = [
+  "/dashboard",
+  "/tasks",
+  "/users",
+  "/settings",
+  "/account",
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,5 +30,6 @@ export const config = {
     "/tasks/:path*",
     "/users/:path*",
     "/settings/:path*",
+    "/account/:path*",
   ],
 };

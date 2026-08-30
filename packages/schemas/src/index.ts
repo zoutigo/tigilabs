@@ -21,10 +21,23 @@ export const loginSchema = z.object({
   password: z.string().min(8, "Le mot de passe doit contenir 8 caracteres."),
 });
 
-const requiredNameSchema = z.string().min(2, "Ce champ est obligatoire.");
-const passwordSchema = z
+export const requiredNameSchema = z
   .string()
-  .min(8, "Le mot de passe doit contenir 8 caracteres.");
+  .trim()
+  .min(2, "Ce champ est obligatoire.");
+
+/**
+ * Password policy: 8+ chars, at least one lowercase, one uppercase and one
+ * special character. Kept as a single source of truth reused by
+ * register/reset/change-password forms and mirrored server-side by
+ * IsStrongPassword on the matching DTOs.
+ */
+export const passwordSchema = z
+  .string()
+  .min(8, "8 caracteres minimum.")
+  .regex(/[a-z]/, "Une minuscule minimum.")
+  .regex(/[A-Z]/, "Une majuscule minimum.")
+  .regex(/[^A-Za-z0-9]/, "Un caractere special minimum.");
 
 export const registerSchema = z
   .object({
@@ -51,6 +64,39 @@ export const resetPasswordSchema = z
   .refine((value) => value.password === value.passwordConfirm, {
     message: "Les mots de passe ne correspondent pas.",
     path: ["passwordConfirm"],
+  });
+
+export const accountProfileSchema = z.object({
+  firstName: requiredNameSchema,
+  lastName: requiredNameSchema,
+});
+
+export const updateFirstNameSchema = accountProfileSchema.pick({
+  firstName: true,
+});
+
+export const updateLastNameSchema = accountProfileSchema.pick({
+  lastName: true,
+});
+
+export const changeEmailSchema = z.object({
+  newEmail: z.string().email("Email invalide."),
+  currentPassword: z.string().min(1, "Mot de passe requis."),
+});
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Mot de passe actuel requis."),
+    newPassword: passwordSchema,
+    newPasswordConfirm: passwordSchema,
+  })
+  .refine((value) => value.newPassword === value.newPasswordConfirm, {
+    message: "Les mots de passe ne correspondent pas.",
+    path: ["newPasswordConfirm"],
+  })
+  .refine((value) => value.newPassword !== value.currentPassword, {
+    message: "Le nouveau mot de passe doit differer de l'ancien.",
+    path: ["newPassword"],
   });
 
 export const createUserSchema = z.object({
@@ -99,3 +145,8 @@ export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
 export type CreateTaskGroupInput = z.infer<typeof createTaskGroupSchema>;
 export type UpdateTaskGroupInput = z.infer<typeof updateTaskGroupSchema>;
 export type CreateTaskProgressInput = z.infer<typeof createTaskProgressSchema>;
+export type AccountProfileInput = z.infer<typeof accountProfileSchema>;
+export type UpdateFirstNameInput = z.infer<typeof updateFirstNameSchema>;
+export type UpdateLastNameInput = z.infer<typeof updateLastNameSchema>;
+export type ChangeEmailInput = z.infer<typeof changeEmailSchema>;
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

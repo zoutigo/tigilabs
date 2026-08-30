@@ -5,19 +5,19 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { AuthShell } from "../../../components/layout/auth-shell";
 import { Button } from "../../../components/ui/button";
-import { confirmEmail } from "../../../lib/api/auth";
+import { confirmEmailChange } from "../../../lib/api/auth";
 
-export default function ConfirmEmailPage() {
+export default function ConfirmEmailChangePage() {
   return (
     <AuthShell>
-      <Suspense fallback={<ConfirmEmailFallback />}>
-        <ConfirmEmailContent />
+      <Suspense fallback={<ConfirmEmailChangeFallback />}>
+        <ConfirmEmailChangeContent />
       </Suspense>
     </AuthShell>
   );
 }
 
-function ConfirmEmailContent() {
+function ConfirmEmailChangeContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -32,7 +32,7 @@ function ConfirmEmailContent() {
       return;
     }
 
-    confirmEmail(token)
+    confirmEmailChange(token)
       .then((response) => {
         setStatus("success");
         setMessage(response.message);
@@ -47,21 +47,21 @@ function ConfirmEmailContent() {
 
   return (
     <section className="card auth-shell-card">
-      <h1>Confirmation email</h1>
+      <h1>Nouvelle adresse email</h1>
       <p className={status === "error" ? "form-error" : "form-success"}>
         {message}
       </p>
       <Button asChild>
-        <Link href="/login">Aller a la connexion</Link>
+        <Link href="/account">Retour a mon compte</Link>
       </Button>
     </section>
   );
 }
 
-function ConfirmEmailFallback() {
+function ConfirmEmailChangeFallback() {
   return (
     <section className="card auth-shell-card">
-      <h1>Confirmation email</h1>
+      <h1>Nouvelle adresse email</h1>
       <p className="muted">Confirmation en cours...</p>
     </section>
   );

@@ -1,14 +1,15 @@
 import { IsString, MinLength } from "class-validator";
 import { IsStrongPasswordField } from "../validators/strong-password.decorator";
 
-export class ResetPasswordDto {
+export class ChangePasswordDto {
   @IsString()
-  token!: string;
+  @MinLength(1)
+  currentPassword!: string;
 
   @IsStrongPasswordField()
-  password!: string;
+  newPassword!: string;
 
   @IsString()
   @MinLength(8)
-  passwordConfirm!: string;
+  newPasswordConfirm!: string;
 }

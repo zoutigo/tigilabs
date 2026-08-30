@@ -1,4 +1,8 @@
-import { UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { AuthTokenType, UserStatus } from "@prisma/client";
 import * as bcrypt from "bcryptjs";
@@ -21,6 +25,7 @@ const prisma = {
   user: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findUniqueOrThrow: jest.fn(),
     update: jest.fn(),
   },
 };
@@ -30,8 +35,10 @@ const jwtService = {
 };
 const usersService = {
   findByEmail: jest.fn(),
+  findOne: jest.fn(),
 };
 const authMailService = {
+  sendEmailChangeConfirmation: jest.fn(),
   sendEmailConfirmation: jest.fn(),
   sendPasswordReset: jest.fn(),
 };
@@ -64,6 +71,7 @@ describe("AuthService", () => {
     );
 
     prisma.user.findUnique.mockResolvedValue(null);
+    prisma.user.findUniqueOrThrow.mockResolvedValue(null);
     prisma.user.create.mockResolvedValue({
       email: "alice@example.com",
       firstName: "Alice",
@@ -71,6 +79,14 @@ describe("AuthService", () => {
       name: "Alice Martin",
     });
     prisma.user.update.mockResolvedValue({});
+    usersService.findOne.mockResolvedValue({
+      email: "alice@example.com",
+      firstName: "Alice",
+      id: "user-1",
+      lastName: "Martin",
+      name: "Alice Martin",
+      status: UserStatus.ACTIVE,
+    });
     prisma.authToken.update.mockResolvedValue({});
     prisma.authToken.updateMany.mockImplementation(({ where }) => {
       authTokens
@@ -110,8 +126,8 @@ describe("AuthService", () => {
         email: "Alice@Example.com",
         firstName: "Alice",
         lastName: "Martin",
-        password: "password123",
-        passwordConfirm: "password123",
+        password: "Password123!",
+        passwordConfirm: "Password123!",
       }),
     ).resolves.toEqual({
       activationExpiresInHours: 24,
@@ -142,13 +158,13 @@ describe("AuthService", () => {
       email: "alice@example.com",
       id: "user-1",
       name: "Alice Martin",
-      passwordHash: await bcrypt.hash("password123", 4),
+      passwordHash: await bcrypt.hash("Password123!", 4),
       roles: [],
       status: UserStatus.INVITED,
     });
 
     await expect(
-      service.login({ email: "alice@example.com", password: "password123" }),
+      service.login({ email: "alice@example.com", password: "Password123!" }),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
@@ -157,8 +173,8 @@ describe("AuthService", () => {
       email: "alice@example.com",
       firstName: "Alice",
       lastName: "Martin",
-      password: "password123",
-      passwordConfirm: "password123",
+      password: "Password123!",
+      passwordConfirm: "Password123!",
     });
     const url = authMailService.sendEmailConfirmation.mock.calls[0][0].url;
     const token = new URL(url).searchParams.get("token");
@@ -189,5 +205,212 @@ describe("AuthService", () => {
         url: expect.stringContaining("http://localhost:3100/reset-password"),
       }),
     );
+  });
+
+  describe("updateProfile", () => {
+    it("recomputes the display name from the updated first/last name", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        firstName: "Alice",
+        lastName: "Martin",
+      });
+
+      await service.updateProfile("user-1", { firstName: "Alicia" });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        data: {
+          firstName: "Alicia",
+          lastName: undefined,
+          name: "Alicia Martin",
+        },
+        where: { id: "user-1" },
+      });
+      expect(usersService.findOne).toHaveBeenCalledWith("user-1");
+    });
+  });
+
+  describe("changeEmail", () => {
+    const passwordHash = bcrypt.hashSync("Password123!", 4);
+
+    it("stores the pending email and sends a confirmation link to the new address", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        email: "alice@example.com",
+        firstName: "Alice",
+        name: "Alice Martin",
+        passwordHash,
+      });
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        service.changeEmail("user-1", {
+          currentPassword: "Password123!",
+          newEmail: "Alice.New@Example.com",
+        }),
+      ).resolves.toEqual({
+        message: "Un email de confirmation a ete envoye a la nouvelle adresse.",
+      });
+
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        data: { pendingEmail: "alice.new@example.com" },
+        where: { id: "user-1" },
+      });
+      expect(authMailService.sendEmailChangeConfirmation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "alice.new@example.com",
+          url: expect.stringContaining(
+            "http://localhost:3100/confirm-email-change",
+          ),
+        }),
+      );
+    });
+
+    it("rejects an incorrect current password", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        email: "alice@example.com",
+        passwordHash,
+      });
+
+      await expect(
+        service.changeEmail("user-1", {
+          currentPassword: "wrong",
+          newEmail: "alice.new@example.com",
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it("rejects an email already used by another account", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        email: "alice@example.com",
+        passwordHash,
+      });
+      prisma.user.findUnique.mockResolvedValueOnce({ id: "user-2" });
+
+      await expect(
+        service.changeEmail("user-1", {
+          currentPassword: "Password123!",
+          newEmail: "taken@example.com",
+        }),
+      ).rejects.toBeInstanceOf(ConflictException);
+    });
+
+    it("rejects a new email identical to the current one", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        email: "alice@example.com",
+        passwordHash,
+      });
+
+      await expect(
+        service.changeEmail("user-1", {
+          currentPassword: "Password123!",
+          newEmail: "alice@example.com",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe("confirmEmailChange", () => {
+    it("promotes the pending email once the token is valid", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        email: "alice@example.com",
+        firstName: "Alice",
+        name: "Alice Martin",
+        passwordHash: bcrypt.hashSync("Password123!", 4),
+      });
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+      await service.changeEmail("user-1", {
+        currentPassword: "Password123!",
+        newEmail: "alice.new@example.com",
+      });
+      const url = authMailService.sendEmailChangeConfirmation.mock.calls[0][0]
+        .url as string;
+      const token = new URL(url).searchParams.get("token");
+
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        pendingEmail: "alice.new@example.com",
+      });
+      prisma.user.findUnique.mockResolvedValueOnce(null);
+
+      await expect(service.confirmEmailChange(token ?? "")).resolves.toEqual({
+        message: "Votre nouvelle adresse email est confirmee.",
+      });
+      expect(prisma.user.update).toHaveBeenCalledWith({
+        data: { email: "alice.new@example.com", pendingEmail: null },
+        where: { id: "user-1" },
+      });
+    });
+
+    it("rejects a token with no pending email change", async () => {
+      authTokens.push({
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+        id: "token-2",
+        tokenHash: "irrelevant",
+        type: AuthTokenType.EMAIL_CHANGE,
+        usedAt: null,
+        userId: "user-1",
+      });
+      prisma.authToken.findUnique.mockImplementationOnce(() =>
+        Promise.resolve(authTokens[authTokens.length - 1]),
+      );
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({
+        pendingEmail: null,
+      });
+
+      await expect(
+        service.confirmEmailChange("any-token"),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe("changePassword", () => {
+    const passwordHash = bcrypt.hashSync("Password123!", 4);
+
+    it("updates the password hash when the current password matches", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({ passwordHash });
+
+      await expect(
+        service.changePassword("user-1", {
+          currentPassword: "Password123!",
+          newPassword: "NewPassword123!",
+          newPasswordConfirm: "NewPassword123!",
+        }),
+      ).resolves.toEqual({ message: "Mot de passe mis a jour." });
+
+      expect(prisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: "user-1" } }),
+      );
+    });
+
+    it("rejects an incorrect current password", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({ passwordHash });
+
+      await expect(
+        service.changePassword("user-1", {
+          currentPassword: "wrong",
+          newPassword: "NewPassword123!",
+          newPasswordConfirm: "NewPassword123!",
+        }),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it("rejects mismatched confirmation", async () => {
+      await expect(
+        service.changePassword("user-1", {
+          currentPassword: "Password123!",
+          newPassword: "NewPassword123!",
+          newPasswordConfirm: "Different123!",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it("rejects a new password identical to the current one", async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValueOnce({ passwordHash });
+
+      await expect(
+        service.changePassword("user-1", {
+          currentPassword: "Password123!",
+          newPassword: "Password123!",
+          newPasswordConfirm: "Password123!",
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
   });
 });

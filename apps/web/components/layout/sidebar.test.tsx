@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { CurrentUserProvider } from "../providers/current-user-provider";
 import { Sidebar } from "./sidebar";
 
 vi.mock("next/navigation", () => ({
@@ -8,7 +9,11 @@ vi.mock("next/navigation", () => ({
 
 describe("Sidebar", () => {
   it("renders the Tigilabs logo, recommended navigation and active task link", () => {
-    render(<Sidebar />);
+    render(
+      <CurrentUserProvider>
+        <Sidebar />
+      </CurrentUserProvider>,
+    );
 
     expect(
       screen.getByLabelText("Tigilabs - tableau de bord"),
@@ -25,6 +30,6 @@ describe("Sidebar", () => {
       "href",
       "/tasks/my",
     );
-    expect(screen.getByText("Valery M.")).toBeInTheDocument();
+    expect(screen.getByText("Admin Tigilabs")).toBeInTheDocument();
   });
 });

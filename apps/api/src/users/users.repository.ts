@@ -8,6 +8,7 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 const publicUserSelection = {
   id: true,
   email: true,
+  pendingEmail: true,
   firstName: true,
   lastName: true,
   name: true,

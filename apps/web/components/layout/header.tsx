@@ -44,5 +44,9 @@ function titleFromPath(pathname: string) {
     return "Parametres";
   }
 
+  if (pathname.startsWith("/account")) {
+    return "Mon compte";
+  }
+
   return "Tableau de bord";
 }

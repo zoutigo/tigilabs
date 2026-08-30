@@ -1,9 +1,14 @@
 import type {
+  ChangeEmailPayload,
+  ChangePasswordPayload,
   ForgotPasswordPayload,
   LoginPayload,
   RegisterPayload,
   ResetPasswordPayload,
+  UpdateProfilePayload,
+  User,
 } from "@tigilabs/types";
+import { apiClient } from "./client";
 
 export function login(payload: LoginPayload) {
   return authRequest<{ user: unknown }>("/api/auth/login", payload);
@@ -32,6 +37,37 @@ export function resetPassword(payload: ResetPasswordPayload) {
 
 export function logout() {
   return authRequest<{ ok: boolean }>("/api/auth/logout", {});
+}
+
+export function confirmEmailChange(token: string) {
+  return authRequest<{ message: string }>("/api/auth/confirm-email-change", {
+    token,
+  });
+}
+
+export function getCurrentUser() {
+  return apiClient<User>("/auth/me");
+}
+
+export function updateProfile(payload: UpdateProfilePayload) {
+  return apiClient<User>("/auth/me", {
+    body: JSON.stringify(payload),
+    method: "PATCH",
+  });
+}
+
+export function changeEmail(payload: ChangeEmailPayload) {
+  return apiClient<{ message: string }>("/auth/change-email", {
+    body: JSON.stringify(payload),
+    method: "POST",
+  });
+}
+
+export function changePassword(payload: ChangePasswordPayload) {
+  return apiClient<{ message: string }>("/auth/change-password", {
+    body: JSON.stringify(payload),
+    method: "POST",
+  });
 }
 
 async function authRequest<T>(path: string, payload: unknown): Promise<T> {

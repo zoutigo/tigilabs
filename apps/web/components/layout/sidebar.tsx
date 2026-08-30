@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCurrentUser } from "../../hooks/use-current-user";
+import { initialsFor, roleLabelFor } from "../../lib/utils";
 import { TigilabsLogo } from "./brand-logo";
 import {
   isChildActive,
@@ -12,6 +14,7 @@ import {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { user } = useCurrentUser();
 
   return (
     <aside className="sidebar">
@@ -65,15 +68,15 @@ export function Sidebar() {
           ),
         )}
       </nav>
-      <div className="sidebar-user">
+      <Link className="sidebar-user" href="/account">
         <span className="avatar avatar-photo" aria-hidden="true">
-          VM
+          {initialsFor(user)}
         </span>
         <span>
-          <strong>Valery M.</strong>
-          <small>Administrateur</small>
+          <strong>{user.name}</strong>
+          <small>{roleLabelFor(user)}</small>
         </span>
-      </div>
+      </Link>
     </aside>
   );
 }

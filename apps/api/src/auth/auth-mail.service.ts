@@ -75,6 +75,30 @@ export class AuthMailService {
     });
   }
 
+  async sendEmailChangeConfirmation(payload: AuthMailPayload) {
+    await this.sendMail({
+      to: payload.to,
+      subject: "Tigilabs - Confirmez votre nouvelle adresse email",
+      text: [
+        `Bonjour ${payload.name},`,
+        "",
+        "Confirmez votre nouvelle adresse email pour l'associer a votre compte Tigilabs.",
+        payload.url,
+        "",
+        "Ce lien expire dans 1 heure. Si vous n'etes pas a l'origine de cette demande, ignorez cet email.",
+      ].join("\n"),
+      html: this.renderActionEmail({
+        title: "Confirmez votre nouvelle adresse email",
+        greeting: `Bonjour ${payload.name},`,
+        body: "Confirmez votre nouvelle adresse email pour l'associer a votre compte Tigilabs.",
+        actionLabel: "Confirmer ma nouvelle adresse",
+        actionUrl: payload.url,
+        footer:
+          "Ce lien expire dans 1 heure. Si vous n'etes pas a l'origine de cette demande, ignorez cet email.",
+      }),
+    });
+  }
+
   private async sendMail(message: {
     to: string;
     subject: string;

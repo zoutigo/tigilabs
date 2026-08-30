@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { PasswordRequirements } from "../../../components/auth/password-requirements";
+import { AuthShell } from "../../../components/layout/auth-shell";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { register as registerAccount } from "../../../lib/api/auth";
@@ -18,10 +20,12 @@ export default function RegisterPage() {
     handleSubmit,
     register,
     reset,
+    watch,
   } = useForm<RegisterInput>({
     mode: "onChange",
     resolver: zodResolver(registerSchema),
   });
+  const password = watch("password") ?? "";
 
   async function onSubmit(values: RegisterInput) {
     setFormError(null);
@@ -42,25 +46,27 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 520 }}>
+    <AuthShell>
+      <section className="card auth-shell-card">
         <h1>Inscription</h1>
+        <p className="muted">
+          Creez votre compte pour rejoindre l&apos;espace interne Tigilabs.
+        </p>
         <form className="form" onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            error={errors.lastName?.message}
-            label="Nom"
-            placeholder="Nom"
-            {...register("lastName")}
-          />
-          <Input
-            error={errors.firstName?.message}
-            label="Prenom"
-            placeholder="Prenom"
-            {...register("firstName")}
-          />
+          <div className="two-columns">
+            <Input
+              error={errors.lastName?.message}
+              label="Nom"
+              placeholder="Nom"
+              {...register("lastName")}
+            />
+            <Input
+              error={errors.firstName?.message}
+              label="Prenom"
+              placeholder="Prenom"
+              {...register("firstName")}
+            />
+          </div>
           <Input
             error={errors.email?.message}
             label="Email"
@@ -75,6 +81,7 @@ export default function RegisterPage() {
             type="password"
             {...register("password")}
           />
+          <PasswordRequirements value={password} />
           <Input
             error={errors.passwordConfirm?.message}
             label="Confirmation"
@@ -93,6 +100,6 @@ export default function RegisterPage() {
           </Link>
         </p>
       </section>
-    </main>
+    </AuthShell>
   );
 }

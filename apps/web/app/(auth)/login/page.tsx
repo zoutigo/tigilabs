@@ -7,15 +7,18 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
+import { AuthShell } from "../../../components/layout/auth-shell";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { login } from "../../../lib/api/auth";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<AuthFallback title="Connexion" />}>
-      <LoginContent />
-    </Suspense>
+    <AuthShell>
+      <Suspense fallback={<AuthFallback />}>
+        <LoginContent />
+      </Suspense>
+    </AuthShell>
   );
 }
 
@@ -54,69 +57,60 @@ function LoginContent() {
   }
 
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
-        <h1>Connexion</h1>
-        {showRegistrationSuccess ? (
-          <div className="auth-success-message" role="status">
-            <CircleCheck aria-hidden="true" size={22} />
-            <div>
-              <strong>Compte cree avec succes.</strong>
-              <p>
-                Un email a ete envoye dans votre boite mail. Cliquez sur le lien
-                contenu dans cet email pour activer votre compte.
-                {activationDelayText ? ` ${activationDelayText}` : null}
-              </p>
-            </div>
+    <section className="card auth-shell-card">
+      <h1>Connexion</h1>
+      <p className="muted">Accedez a votre espace de travail Tigilabs.</p>
+      {showRegistrationSuccess ? (
+        <div className="auth-success-message" role="status">
+          <CircleCheck aria-hidden="true" size={22} />
+          <div>
+            <strong>Compte cree avec succes.</strong>
+            <p>
+              Un email a ete envoye dans votre boite mail. Cliquez sur le lien
+              contenu dans cet email pour activer votre compte.
+              {activationDelayText ? ` ${activationDelayText}` : null}
+            </p>
           </div>
-        ) : null}
-        <form className="form" onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            error={errors.email?.message}
-            label="Email"
-            placeholder="vous@tigilabs.com"
-            type="email"
-            {...registerField("email")}
-          />
-          <Input
-            error={errors.password?.message}
-            label="Mot de passe"
-            placeholder="Mot de passe"
-            type="password"
-            {...registerField("password")}
-          />
-          {formError ? <p className="form-error">{formError}</p> : null}
-          <Button disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Connexion..." : "Se connecter"}
-          </Button>
-        </form>
-        <p>
-          <Link className="muted" href="/forgot-password">
-            Mot de passe oublie ?
-          </Link>
-        </p>
-        <p>
-          <Link className="muted" href="/register">
-            Creer un compte
-          </Link>
-        </p>
-      </section>
-    </main>
+        </div>
+      ) : null}
+      <form className="form" onSubmit={handleSubmit(onSubmit)}>
+        <Input
+          error={errors.email?.message}
+          label="Email"
+          placeholder="vous@tigilabs.com"
+          type="email"
+          {...registerField("email")}
+        />
+        <Input
+          error={errors.password?.message}
+          label="Mot de passe"
+          placeholder="Mot de passe"
+          type="password"
+          {...registerField("password")}
+        />
+        {formError ? <p className="form-error">{formError}</p> : null}
+        <Button disabled={isSubmitting} type="submit">
+          {isSubmitting ? "Connexion..." : "Se connecter"}
+        </Button>
+      </form>
+      <p>
+        <Link className="muted" href="/forgot-password">
+          Mot de passe oublie ?
+        </Link>
+      </p>
+      <p>
+        <Link className="muted" href="/register">
+          Creer un compte
+        </Link>
+      </p>
+    </section>
   );
 }
 
-function AuthFallback({ title }: Readonly<{ title: string }>) {
+function AuthFallback() {
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
-        <h1>{title}</h1>
-      </section>
-    </main>
+    <section className="card auth-shell-card">
+      <h1>Connexion</h1>
+    </section>
   );
 }

@@ -16,6 +16,7 @@ enum UserStatus {
 enum AuthTokenType {
   EMAIL_CONFIRMATION
   PASSWORD_RESET
+  EMAIL_CHANGE
 }
 
 enum TaskStatus {
@@ -43,6 +44,7 @@ enum TaskGroupStatus {
 model User {
   id           String     @id @default(cuid())
   email        String     @unique
+  pendingEmail String?
   firstName    String?
   lastName     String?
   name         String

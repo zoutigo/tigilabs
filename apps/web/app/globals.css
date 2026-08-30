@@ -148,6 +148,38 @@ input[aria-invalid="true"]:focus {
   gap: 7px;
 }
 
+.input-reveal-wrap {
+  display: block;
+  position: relative;
+}
+
+.input-with-reveal {
+  padding-right: 42px;
+}
+
+.input-reveal-toggle {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  height: 30px;
+  justify-content: center;
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+}
+
+.input-reveal-toggle:hover,
+.input-reveal-toggle:focus-visible {
+  color: var(--foreground);
+  outline: 0;
+}
+
 .field-error,
 .form-error,
 .form-success {
@@ -406,11 +438,146 @@ textarea {
 
 .hero,
 .section,
-.auth-page,
 .private-content {
   margin: 0 auto;
   max-width: 1120px;
   padding: 56px 24px;
+}
+
+.auth-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+  min-height: 100vh;
+}
+
+.auth-shell-brand {
+  background: var(--sidebar);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 40px;
+  position: relative;
+}
+
+.auth-shell-brand .tigilabs-logo-copy strong,
+.auth-shell-brand .tigilabs-logo-copy small {
+  color: #ffffff;
+}
+
+.auth-shell-pitch {
+  margin-top: auto;
+  max-width: 400px;
+  position: relative;
+  z-index: 1;
+}
+
+.auth-shell-eyebrow {
+  color: var(--accent);
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.auth-shell-pitch h2 {
+  font-size: 26px;
+  line-height: 1.28;
+  margin: 0 0 18px;
+}
+
+.auth-shell-points {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.auth-shell-points li {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--sidebar-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding-top: 10px;
+}
+
+.auth-shell-network {
+  bottom: 0;
+  height: 240px;
+  opacity: 0.55;
+  position: absolute;
+  right: -30px;
+  width: 340px;
+}
+
+.auth-shell-network-lines line {
+  stroke: rgba(var(--primary-rgb), 0.55);
+  stroke-width: 1.4;
+}
+
+.auth-shell-network-nodes circle {
+  fill: var(--accent);
+}
+
+.auth-shell-network-nodes circle:nth-child(2),
+.auth-shell-network-nodes circle:nth-child(3) {
+  fill: #ffffff;
+}
+
+.auth-shell-panel {
+  align-items: center;
+  background: var(--background);
+  display: flex;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.auth-shell-panel-inner {
+  width: 100%;
+}
+
+.auth-shell-panel-inner .auth-shell-card {
+  margin: 0 auto;
+  max-width: 420px;
+}
+
+.auth-shell-panel-inner h1 {
+  font-size: 24px;
+  margin: 0 0 6px;
+}
+
+.auth-shell-panel-inner > .auth-shell-card > p.muted:first-of-type {
+  margin-top: 0;
+}
+
+@media (max-width: 900px) {
+  .auth-shell {
+    display: block;
+    min-height: auto;
+  }
+
+  .auth-shell-brand {
+    align-items: center;
+    flex-direction: row;
+    justify-content: center;
+    padding: 20px 24px;
+  }
+
+  .auth-shell-brand .tigilabs-logo-copy small {
+    display: none;
+  }
+
+  .auth-shell-pitch,
+  .auth-shell-network {
+    display: none;
+  }
+
+  .auth-shell-panel {
+    padding: 32px 20px 48px;
+  }
 }
 
 .hero {
@@ -1481,6 +1648,13 @@ textarea {
   margin-top: auto;
   min-width: 0;
   padding: 10px;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-user:hover,
+.sidebar-user:focus-visible {
+  background: rgba(255, 255, 255, 0.14);
+  outline: 0;
 }
 
 .sidebar-user span:last-child,
@@ -1620,6 +1794,21 @@ textarea {
   display: flex;
   gap: 8px;
   min-width: 0;
+}
+
+.user-menu-identity {
+  align-items: center;
+  border-radius: 999px;
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  padding: 4px 6px 4px 4px;
+}
+
+.user-menu-identity:hover,
+.user-menu-identity:focus-visible {
+  background: var(--panel-muted);
+  outline: 0;
 }
 
 .task-kpis {
@@ -2683,5 +2872,138 @@ textarea {
 
   .progress-form .tl-button {
     width: 100%;
+  }
+}
+
+/* Account module */
+.account-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.account-hero {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+}
+
+.account-hero-avatar {
+  flex: 0 0 auto;
+  font-size: 16px;
+  height: 56px;
+  width: 56px;
+}
+
+.account-hero h2 {
+  font-size: var(--fs-title);
+  margin: 0 0 2px;
+}
+
+.account-hero .badge {
+  margin-top: 8px;
+}
+
+.account-section h3 {
+  align-items: center;
+  color: var(--foreground);
+  display: flex;
+  gap: 8px;
+  font-size: var(--fs-md);
+  font-weight: 800;
+  margin: 0;
+}
+
+.account-section .panel-heading {
+  margin-bottom: 14px;
+}
+
+.account-current-value {
+  color: var(--foreground);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.account-field-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-field-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.account-inline-form {
+  gap: 8px;
+}
+
+.account-inline-form input {
+  font-size: 13.5px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 6px 8px;
+}
+
+.account-inline-form-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.icon-button-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.account-inline-form-actions-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.account-pending-banner {
+  margin: 14px 0 0;
+}
+
+.password-rules {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: -4px 0 0;
+  padding: 0;
+}
+
+.password-rule {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 6px;
+}
+
+.password-rule.is-met {
+  color: var(--success);
+}
+
+@media (max-width: 800px) {
+  .account-field-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .password-rules {
+    grid-template-columns: 1fr;
+  }
+
+  .account-hero {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

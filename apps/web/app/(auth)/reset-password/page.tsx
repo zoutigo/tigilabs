@@ -9,15 +9,19 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
+import { PasswordRequirements } from "../../../components/auth/password-requirements";
+import { AuthShell } from "../../../components/layout/auth-shell";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { resetPassword } from "../../../lib/api/auth";
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={<ResetPasswordFallback />}>
-      <ResetPasswordContent />
-    </Suspense>
+    <AuthShell>
+      <Suspense fallback={<ResetPasswordFallback />}>
+        <ResetPasswordContent />
+      </Suspense>
+    </AuthShell>
   );
 }
 
@@ -32,10 +36,12 @@ function ResetPasswordContent() {
     formState: { errors, isSubmitting },
     handleSubmit,
     register,
+    watch,
   } = useForm<ResetPasswordInput>({
     mode: "onChange",
     resolver: zodResolver(resetPasswordSchema),
   });
+  const password = watch("password") ?? "";
 
   async function onSubmit(values: ResetPasswordInput) {
     if (!token) {
@@ -56,52 +62,43 @@ function ResetPasswordContent() {
   }
 
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
-        <h1>Nouveau mot de passe</h1>
-        <form className="form" onSubmit={handleSubmit(onSubmit)}>
-          <Input
-            error={errors.password?.message}
-            label="Mot de passe"
-            placeholder="Nouveau mot de passe"
-            type="password"
-            {...register("password")}
-          />
-          <Input
-            error={errors.passwordConfirm?.message}
-            label="Confirmation"
-            placeholder="Confirmez le mot de passe"
-            type="password"
-            {...register("passwordConfirm")}
-          />
-          {formError ? <p className="form-error">{formError}</p> : null}
-          {success ? <p className="form-success">{success}</p> : null}
-          <Button disabled={isSubmitting || !token} type="submit">
-            {isSubmitting ? "Enregistrement..." : "Enregistrer"}
-          </Button>
-        </form>
-        <p>
-          <Link className="muted" href="/login">
-            Retour a la connexion
-          </Link>
-        </p>
-      </section>
-    </main>
+    <section className="card auth-shell-card">
+      <h1>Nouveau mot de passe</h1>
+      <form className="form" onSubmit={handleSubmit(onSubmit)}>
+        <Input
+          error={errors.password?.message}
+          label="Mot de passe"
+          placeholder="Nouveau mot de passe"
+          type="password"
+          {...register("password")}
+        />
+        <PasswordRequirements value={password} />
+        <Input
+          error={errors.passwordConfirm?.message}
+          label="Confirmation"
+          placeholder="Confirmez le mot de passe"
+          type="password"
+          {...register("passwordConfirm")}
+        />
+        {formError ? <p className="form-error">{formError}</p> : null}
+        {success ? <p className="form-success">{success}</p> : null}
+        <Button disabled={isSubmitting || !token} type="submit">
+          {isSubmitting ? "Enregistrement..." : "Enregistrer"}
+        </Button>
+      </form>
+      <p>
+        <Link className="muted" href="/login">
+          Retour a la connexion
+        </Link>
+      </p>
+    </section>
   );
 }
 
 function ResetPasswordFallback() {
   return (
-    <main className="auth-page">
-      <Link className="brand" href="/">
-        Tigilabs
-      </Link>
-      <section className="card" style={{ marginTop: 32, maxWidth: 440 }}>
-        <h1>Nouveau mot de passe</h1>
-      </section>
-    </main>
+    <section className="card auth-shell-card">
+      <h1>Nouveau mot de passe</h1>
+    </section>
   );
 }

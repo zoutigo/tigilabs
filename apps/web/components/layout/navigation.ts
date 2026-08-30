@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   CheckSquare,
+  CircleUserRound,
   LayoutDashboard,
   LayoutList,
   ScrollText,
@@ -50,6 +51,12 @@ export const privateNavLinks: NavEntry[] = [
   { href: "/users", icon: Users, id: "users", label: "Utilisateurs" },
   { href: "/dashboard", icon: ScrollText, id: "reports", label: "Rapports" },
   { href: "/settings", icon: Settings, id: "settings", label: "Parametres" },
+  {
+    href: "/account",
+    icon: CircleUserRound,
+    id: "account",
+    label: "Mon compte",
+  },
 ];
 
 export function isGroupActive(pathname: string, item: NavEntry) {
