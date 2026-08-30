@@ -52,12 +52,37 @@ export function MobileMenu() {
             </div>
 
             <nav aria-label="Navigation mobile" className="mobile-menu-nav">
-              {privateNavLinks.map(({ href, id, label, icon: Icon }) => (
-                <Link href={href} key={id} onClick={() => setOpen(false)}>
-                  <Icon size={19} />
-                  <span>{label}</span>
-                </Link>
-              ))}
+              {privateNavLinks.map((item) =>
+                item.children ? (
+                  <div className="mobile-menu-nav-group" key={item.id}>
+                    <span className="mobile-menu-nav-parent">
+                      <item.icon size={17} />
+                      {item.label}
+                    </span>
+                    <div className="mobile-menu-nav-children">
+                      {item.children.map((child) => (
+                        <Link
+                          href={child.href}
+                          key={child.id}
+                          onClick={() => setOpen(false)}
+                        >
+                          <child.icon size={17} />
+                          <span>{child.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <Link
+                    href={item.href}
+                    key={item.id}
+                    onClick={() => setOpen(false)}
+                  >
+                    <item.icon size={19} />
+                    <span>{item.label}</span>
+                  </Link>
+                ),
+              )}
             </nav>
 
             <button

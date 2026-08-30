@@ -16,7 +16,8 @@ describe("Sidebar", () => {
     expect(
       screen.getByRole("link", { name: /Tableau de bord/ }),
     ).toHaveAttribute("href", "/dashboard");
-    expect(screen.getByRole("link", { name: /Taches/ })).toHaveAttribute(
+    expect(screen.getByText("Taches").closest("a")).toBeNull();
+    expect(screen.getByRole("link", { name: /Synthese/ })).toHaveAttribute(
       "aria-current",
       "page",
     );

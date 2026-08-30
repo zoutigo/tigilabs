@@ -2,6 +2,7 @@
 
 import { Bell, Search } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { TigilabsLogo } from "./brand-logo";
 import { MobileMenu } from "./mobile-menu";
 import { UserMenu } from "./user-menu";
 
@@ -13,6 +14,9 @@ export function Header() {
       <MobileMenu />
       <div className="header-title">
         <h1>{titleFromPath(pathname)}</h1>
+      </div>
+      <div className="header-logo">
+        <TigilabsLogo compact href="/dashboard" />
       </div>
       <label className="header-search">
         <Search size={16} />

@@ -67,6 +67,8 @@ Toute nouvelle migration doit passer par `pnpm prisma:migrate` (jamais éditer l
 
 - Ne pas utiliser le tool `Agent` (pas de sous-agents/subagents, y compris `Explore` ou `fork`) sur ce repo : l'utilisateur veut que Claude fasse tout lui-même directement (exploration, code, tests).
 - Apres chaque modification de code, ecrire/completer des tests approfondis (cas nominal + gestion des erreurs), puis executer `pnpm typecheck`, `pnpm lint`, `pnpm format`, `pnpm test` (ou `pnpm check:repo`) avant de commiter. Une tache n'est terminee qu'apres commit + push vers `origin/dev` (voir `AGENTS.md`).
+- Apres chaque `git push`, monitorer le run CI GitHub Actions declenche (`.github/workflows/ci.yml`) jusqu'a son resultat (succes/echec) plutot que de considerer la tache terminee au push.
+- Toute modification ou creation d'UI doit reutiliser les composants deja presents dans `apps/web/components/` (par domaine : `tasks`, `users`, `layout`, `ui`) avant d'en creer de nouveaux, et doit etre pensee/verifiee pour les trois gabarits desktop, tablette et mobile en s'appuyant sur le skill `frontend-design`.
 
 ## Conventions à respecter
 

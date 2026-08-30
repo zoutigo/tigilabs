@@ -570,6 +570,32 @@ textarea {
   padding-top: 10px;
 }
 
+.mobile-menu-nav-group {
+  display: grid;
+  gap: 4px;
+}
+
+.mobile-menu-nav-parent {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 10px;
+  letter-spacing: 0.03em;
+  padding: 8px 10px 0;
+  text-transform: uppercase;
+}
+
+.mobile-menu-nav-children {
+  display: grid;
+  gap: 4px;
+}
+
+.mobile-menu-nav-children a {
+  padding-left: 30px;
+}
+
 .mobile-menu-nav a,
 .mobile-menu-logout {
   align-items: center;
@@ -1221,6 +1247,10 @@ textarea {
     font-size: 20px;
   }
 
+  .header-logo .tigilabs-logo-copy {
+    display: none;
+  }
+
   .private-content {
     padding-inline: 10px;
   }
@@ -1317,6 +1347,36 @@ textarea {
   color: #ffffff;
 }
 
+.sidebar-nav-group {
+  display: grid;
+  gap: 4px;
+}
+
+.sidebar-nav-parent {
+  align-items: center;
+  color: var(--sidebar-text-muted);
+  display: flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 10px;
+  letter-spacing: 0.03em;
+  padding: 8px 12px 2px;
+  text-transform: uppercase;
+}
+
+.sidebar-nav-parent.is-active {
+  color: #ffffff;
+}
+
+.sidebar-nav-children {
+  display: grid;
+  gap: 6px;
+}
+
+.sidebar-nav-children a {
+  padding-left: 30px;
+}
+
 .sidebar-user {
   align-items: center;
   background: rgba(255, 255, 255, 0.08);
@@ -1365,6 +1425,10 @@ textarea {
 
 .header-title {
   min-width: 130px;
+}
+
+.header-logo {
+  display: none;
 }
 
 .header h1,
@@ -1838,7 +1902,12 @@ textarea {
 
 .task-table {
   font-size: 12px;
-  min-width: 780px;
+}
+
+@media (min-width: 641px) {
+  .task-table {
+    min-width: 780px;
+  }
 }
 
 .task-table th {
@@ -2286,7 +2355,10 @@ textarea {
     padding-inline: 12px;
   }
 
-  .sidebar .tigilabs-logo-copy,
+  .sidebar .tigilabs-logo-copy {
+    display: none;
+  }
+
   .sidebar nav a {
     font-size: 0;
   }
@@ -2294,6 +2366,14 @@ textarea {
   .sidebar nav a {
     justify-content: center;
     width: 48px;
+  }
+
+  .sidebar-nav-parent {
+    display: none;
+  }
+
+  .sidebar-nav-children a {
+    padding-left: 0;
   }
 
   .sidebar-user {
@@ -2369,6 +2449,21 @@ textarea {
     display: none;
   }
 
+  .header-logo {
+    align-items: center;
+    display: flex;
+    margin-left: auto;
+  }
+
+  .header-logo .tigilabs-logo-mark {
+    height: 26px;
+    width: 26px;
+  }
+
+  .header-logo .tigilabs-logo-copy strong {
+    font-size: 14px;
+  }
+
   .mobile-menu {
     display: block;
   }
@@ -2406,6 +2501,10 @@ textarea {
 
   .task-header-actions .tl-button {
     flex: 1 1 auto;
+  }
+
+  .task-header-actions .tl-button-ghost {
+    flex: 0 0 auto;
   }
 
   .task-tabs {
@@ -2478,6 +2577,10 @@ textarea {
 
   .task-header-actions .tl-button {
     flex: 1 1 0;
+  }
+
+  .task-header-actions .tl-button-ghost {
+    flex: 0 0 auto;
   }
 
   .progress-form {
