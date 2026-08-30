@@ -1,15 +1,24 @@
 "use client";
 
 import {
+  AlignLeft,
+  CalendarCheck2,
+  CalendarClock,
+  CalendarDays,
   CheckCircle2,
-  MoreVertical,
+  FolderKanban,
+  History as HistoryIcon,
+  MessageSquare,
   Pencil,
   RotateCcw,
   Send,
+  Sparkles,
   Star,
   Trash2,
-  X,
+  UserCog,
+  UserRound,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -31,7 +40,6 @@ import {
 } from "../../lib/api/tasks";
 import { Button } from "../ui/button";
 import { FormMessage } from "../ui/form-message";
-import { Input } from "../ui/input";
 import { Modal } from "../ui/modal";
 import { useToast } from "../ui/toast";
 import { TaskPriority } from "./task-priority";
@@ -43,15 +51,24 @@ type ProgressForm = {
 
 type DetailTab = "avancement" | "details" | "historique";
 
-type EditTaskForm = {
+type EditableField =
+  | "assignedToId"
+  | "description"
+  | "dueDate"
+  | "priority"
+  | "startDate"
+  | "status"
+  | "title";
+
+type UpdateTaskPayload = Partial<{
   title: string;
-  description?: string;
-  startDate?: string;
-  dueDate?: string;
+  description: string;
+  startDate: string;
+  dueDate: string | null;
   priority: TaskPriorityValue;
   status: TaskStatusValue;
-  assignedToId?: string;
-};
+  assignedToId: string | null;
+}>;
 
 export function TaskDetail({ id }: Readonly<{ id: string }>) {
   const router = useRouter();
@@ -62,8 +79,8 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   );
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<DetailTab>("details");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<EditableField | null>(null);
+  const [isSavingField, setIsSavingField] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -74,16 +91,6 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
     reset,
   } = useForm<ProgressForm>({
     defaultValues: { content: "" },
-    mode: "onChange",
-  });
-  const editForm = useForm<EditTaskForm>({
-    defaultValues: {
-      assignedToId: "",
-      description: "",
-      priority: "MEDIUM",
-      status: "TODO",
-      title: "",
-    },
     mode: "onChange",
   });
 
@@ -128,49 +135,79 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   const responsible = task.assignedTo ?? task.assignee;
   const activeUsers = users.filter((user) => user.status === "ACTIVE");
 
-  function openEdit() {
+  async function saveField(payload: UpdateTaskPayload) {
     if (!task) {
       return;
     }
 
-    setEditError(null);
-    editForm.reset({
-      assignedToId: task.assignedToId ?? "",
-      description: task.description ?? "",
-      dueDate: toDateInput(task.dueDate),
-      priority: task.priority,
-      startDate: toDateInput(task.startDate),
-      status: task.status,
-      title: task.title,
-    });
-    setIsEditing(true);
-  }
-
-  async function onSubmitEdit(values: EditTaskForm) {
-    if (!task) {
-      return;
-    }
-
-    setEditError(null);
-    const payload = {
-      ...values,
-      assignedToId: values.assignedToId || null,
-      dueDate: values.dueDate ? new Date(values.dueDate).toISOString() : null,
-      startDate: values.startDate
-        ? new Date(values.startDate).toISOString()
-        : undefined,
-    };
-
+    setIsSavingField(true);
     try {
       const updated = await updateTask(task.id, payload);
       setTask(updated);
-      setIsEditing(false);
+      setEditingField(null);
       toast({ title: "Tache mise a jour.", variant: "success" });
     } catch {
-      setEditError(
-        "La mise a jour n'a pas pu etre enregistree. Verifiez votre connexion et reessayez.",
-      );
+      toast({
+        title: "La mise a jour n'a pas pu etre enregistree.",
+        variant: "error",
+      });
+    } finally {
+      setIsSavingField(false);
     }
+  }
+
+  function handleTitleBlur(event: React.FocusEvent<HTMLInputElement>) {
+    if (!task) {
+      return;
+    }
+
+    const nextTitle = event.target.value.trim();
+    if (!nextTitle) {
+      toast({ title: "L'intitule est obligatoire.", variant: "error" });
+      setEditingField(null);
+      return;
+    }
+    if (nextTitle === task.title) {
+      setEditingField(null);
+      return;
+    }
+    saveField({ title: nextTitle });
+  }
+
+  function handleDescriptionBlur(event: React.FocusEvent<HTMLTextAreaElement>) {
+    if (!task) {
+      return;
+    }
+
+    const nextDescription = event.target.value;
+    if (nextDescription === (task.description ?? "")) {
+      setEditingField(null);
+      return;
+    }
+    saveField({ description: nextDescription });
+  }
+
+  function handleDateBlur(
+    field: "dueDate" | "startDate",
+    event: React.FocusEvent<HTMLInputElement>,
+  ) {
+    if (!task) {
+      return;
+    }
+
+    const nextValue = event.target.value;
+    const currentValue = toDateInput(task[field]);
+    if (nextValue === currentValue) {
+      setEditingField(null);
+      return;
+    }
+    saveField({
+      [field]: nextValue
+        ? new Date(nextValue).toISOString()
+        : field === "dueDate"
+          ? null
+          : undefined,
+    });
   }
 
   async function handleDelete() {
@@ -260,14 +297,66 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
             <Link href="/tasks">Groupes</Link>
             <span>/</span>
             <span>{task.group?.name ?? task.groupId}</span>
-            <span>/</span>
-            <span>{task.title}</span>
           </div>
           <div className="task-group-header">
             <div>
-              <h2>{task.title}</h2>
+              {editingField === "title" ? (
+                <input
+                  autoFocus
+                  className="title-edit-input"
+                  defaultValue={task.title}
+                  disabled={isSavingField}
+                  name="title"
+                  onBlur={handleTitleBlur}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      event.currentTarget.blur();
+                    } else if (event.key === "Escape") {
+                      setEditingField(null);
+                    }
+                  }}
+                />
+              ) : (
+                <button
+                  aria-label="Modifier l'intitule"
+                  className="title-button"
+                  onClick={() => setEditingField("title")}
+                  type="button"
+                >
+                  <h2>{task.title}</h2>
+                </button>
+              )}
               <div className="task-title-meta">
-                <TaskStatus status={task.status} />
+                {editingField === "status" ? (
+                  <select
+                    autoFocus
+                    className="status-select"
+                    defaultValue={task.status}
+                    disabled={isSavingField}
+                    name="status"
+                    onBlur={() => setEditingField(null)}
+                    onChange={(event) =>
+                      saveField({
+                        status: event.target.value as TaskStatusValue,
+                      })
+                    }
+                  >
+                    <option value="TODO">A faire</option>
+                    <option value="IN_PROGRESS">En cours</option>
+                    <option value="BLOCKED">Bloquee</option>
+                  </select>
+                ) : (
+                  <button
+                    aria-label="Modifier le statut"
+                    className="status-button"
+                    disabled={task.status === "DONE"}
+                    onClick={() => setEditingField("status")}
+                    type="button"
+                  >
+                    <TaskStatus status={task.status} />
+                  </button>
+                )}
                 <button
                   aria-label="Mettre en favori"
                   className="icon-button"
@@ -276,41 +365,6 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
                   <Star size={16} />
                 </button>
               </div>
-            </div>
-            <div className="task-header-actions">
-              {isEditing ? (
-                <Button
-                  onClick={() => setIsEditing(false)}
-                  type="button"
-                  variant="secondary"
-                >
-                  <X size={17} />
-                  Annuler
-                </Button>
-              ) : (
-                <Button onClick={openEdit} type="button" variant="secondary">
-                  <Pencil size={17} />
-                  Modifier
-                </Button>
-              )}
-              <Button
-                onClick={() => {
-                  setDeleteError(null);
-                  setIsDeleteConfirmOpen(true);
-                }}
-                type="button"
-                variant="danger"
-              >
-                <Trash2 size={17} />
-                Supprimer
-              </Button>
-              <button
-                aria-label="Options de la tache"
-                className="icon-button"
-                type="button"
-              >
-                <MoreVertical size={18} />
-              </button>
             </div>
           </div>
           <div className="task-tabs" role="tablist">
@@ -341,123 +395,228 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
           </div>
         </div>
 
-        <div className={`task-detail-content${isEditing ? " is-editing" : ""}`}>
+        <div className="task-detail-content">
           <div className="task-panel task-panel-details">
-            {isEditing ? (
-              <section className="inline-form-panel">
-                <h3>Modifier la tache</h3>
-                {editError ? (
-                  <FormMessage title="Echec de la mise a jour" variant="error">
-                    {editError}
-                  </FormMessage>
-                ) : null}
-                <form
-                  className="form"
-                  onSubmit={editForm.handleSubmit(onSubmitEdit)}
-                >
-                  <div className="two-columns">
-                    <Input
-                      error={editForm.formState.errors.title?.message}
-                      label="Intitule"
-                      {...editForm.register("title", {
-                        required: "L'intitule est obligatoire.",
-                      })}
-                    />
-                    <label className="field">
-                      <span>Responsable</span>
-                      <select {...editForm.register("assignedToId")}>
-                        <option value="">Sans responsable</option>
-                        {activeUsers.map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+            <div className="task-detail-meta">
+              <Info
+                icon={FolderKanban}
+                label="Groupe"
+                value={task.group?.name ?? task.groupId}
+              />
+
+              {editingField === "assignedToId" ? (
+                <div className="meta-card is-editing">
+                  <div className="meta-head">
+                    <span className="meta-icon">
+                      <UserRound size={16} />
+                    </span>
+                    <span className="meta-label">Responsable</span>
                   </div>
-                  <label className="field">
-                    <span>Details</span>
-                    <textarea rows={4} {...editForm.register("description")} />
-                  </label>
-                  <div className="two-columns">
-                    <Input
-                      label="Date de debut"
-                      type="date"
-                      {...editForm.register("startDate")}
-                    />
-                    <Input
-                      label="Date de fin prevue"
-                      type="date"
-                      {...editForm.register("dueDate")}
-                    />
-                  </div>
-                  <div className="two-columns">
-                    <label className="field">
-                      <span>Priorite</span>
-                      <select {...editForm.register("priority")}>
-                        <option value="LOW">Basse</option>
-                        <option value="MEDIUM">Normale</option>
-                        <option value="HIGH">Haute</option>
-                        <option value="URGENT">Urgente</option>
-                      </select>
-                    </label>
-                    <label className="field">
-                      <span>Statut</span>
-                      <select {...editForm.register("status")}>
-                        <option value="TODO">A faire</option>
-                        <option value="IN_PROGRESS">En cours</option>
-                        <option value="BLOCKED">Bloquee</option>
-                        <option value="DONE">Terminee</option>
-                      </select>
-                    </label>
-                  </div>
-                  <Button
-                    disabled={editForm.formState.isSubmitting}
-                    type="submit"
+                  <select
+                    autoFocus
+                    className="meta-field-control"
+                    defaultValue={task.assignedToId ?? ""}
+                    disabled={isSavingField}
+                    name="assignedToId"
+                    onBlur={() => setEditingField(null)}
+                    onChange={(event) =>
+                      saveField({ assignedToId: event.target.value || null })
+                    }
                   >
-                    Enregistrer
-                  </Button>
-                </form>
-              </section>
-            ) : (
-              <>
-                <div className="task-detail-meta">
-                  <Info
-                    label="Groupe"
-                    value={task.group?.name ?? task.groupId}
-                  />
-                  <Info
-                    label="Responsable"
-                    value={responsible?.name ?? "Non affecte"}
-                  />
-                  <div>
-                    <span>Priorite</span>
-                    <TaskPriority priority={task.priority} />
+                    <option value="">Sans responsable</option>
+                    {activeUsers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <button
+                  aria-label="Modifier le responsable"
+                  className="meta-card meta-card-button"
+                  onClick={() => setEditingField("assignedToId")}
+                  type="button"
+                >
+                  <div className="meta-head">
+                    <span className="meta-icon">
+                      <UserRound size={16} />
+                    </span>
+                    <span className="meta-label">Responsable</span>
                   </div>
-                  <Info
-                    label="Date de debut"
-                    value={formatDate(task.startDate)}
-                  />
-                  <Info
-                    label="Date de fin prevue"
-                    value={formatDate(task.dueDate)}
-                  />
-                  <Info
-                    label="Date de fin reelle"
-                    value={formatDate(task.completedAt)}
+                  <strong className="meta-value">
+                    {responsible?.name ?? "Non affecte"}
+                  </strong>
+                </button>
+              )}
+
+              {editingField === "priority" ? (
+                <div className="meta-card is-editing">
+                  <div className="meta-head">
+                    <span className="meta-icon meta-icon-priority">
+                      <Sparkles size={16} />
+                    </span>
+                    <span className="meta-label">Priorite</span>
+                  </div>
+                  <select
+                    autoFocus
+                    className="meta-field-control"
+                    defaultValue={task.priority}
+                    disabled={isSavingField}
+                    name="priority"
+                    onBlur={() => setEditingField(null)}
+                    onChange={(event) =>
+                      saveField({
+                        priority: event.target.value as TaskPriorityValue,
+                      })
+                    }
+                  >
+                    <option value="LOW">Basse</option>
+                    <option value="MEDIUM">Normale</option>
+                    <option value="HIGH">Haute</option>
+                    <option value="URGENT">Urgente</option>
+                  </select>
+                </div>
+              ) : (
+                <button
+                  aria-label="Modifier la priorite"
+                  className="meta-card meta-card-button"
+                  onClick={() => setEditingField("priority")}
+                  type="button"
+                >
+                  <div className="meta-head">
+                    <span className="meta-icon meta-icon-priority">
+                      <Sparkles size={16} />
+                    </span>
+                    <span className="meta-label">Priorite</span>
+                  </div>
+                  <TaskPriority priority={task.priority} />
+                </button>
+              )}
+
+              {editingField === "startDate" ? (
+                <div className="meta-card is-editing">
+                  <div className="meta-head">
+                    <span className="meta-icon">
+                      <CalendarDays size={16} />
+                    </span>
+                    <span className="meta-label">Date de debut</span>
+                  </div>
+                  <input
+                    autoFocus
+                    className="meta-field-control"
+                    defaultValue={toDateInput(task.startDate)}
+                    disabled={isSavingField}
+                    name="startDate"
+                    onBlur={(event) => handleDateBlur("startDate", event)}
+                    type="date"
                   />
                 </div>
+              ) : (
+                <button
+                  aria-label="Modifier la date de debut"
+                  className="meta-card meta-card-button"
+                  onClick={() => setEditingField("startDate")}
+                  type="button"
+                >
+                  <div className="meta-head">
+                    <span className="meta-icon">
+                      <CalendarDays size={16} />
+                    </span>
+                    <span className="meta-label">Date de debut</span>
+                  </div>
+                  <strong className="meta-value">
+                    {formatDate(task.startDate)}
+                  </strong>
+                </button>
+              )}
 
-                <section className="task-description-panel">
-                  <h3>Description</h3>
-                  <p>{task.description ?? "Aucune description renseignee."}</p>
-                </section>
-              </>
+              {editingField === "dueDate" ? (
+                <div className="meta-card is-editing">
+                  <div className="meta-head">
+                    <span className="meta-icon">
+                      <CalendarClock size={16} />
+                    </span>
+                    <span className="meta-label">Date de fin prevue</span>
+                  </div>
+                  <input
+                    autoFocus
+                    className="meta-field-control"
+                    defaultValue={toDateInput(task.dueDate)}
+                    disabled={isSavingField}
+                    name="dueDate"
+                    onBlur={(event) => handleDateBlur("dueDate", event)}
+                    type="date"
+                  />
+                </div>
+              ) : (
+                <button
+                  aria-label="Modifier la date de fin prevue"
+                  className="meta-card meta-card-button"
+                  onClick={() => setEditingField("dueDate")}
+                  type="button"
+                >
+                  <div className="meta-head">
+                    <span className="meta-icon">
+                      <CalendarClock size={16} />
+                    </span>
+                    <span className="meta-label">Date de fin prevue</span>
+                  </div>
+                  <strong className="meta-value">
+                    {formatDate(task.dueDate)}
+                  </strong>
+                </button>
+              )}
+
+              <Info
+                icon={CalendarCheck2}
+                label="Date de fin reelle"
+                value={formatDate(task.completedAt)}
+              />
+            </div>
+
+            {editingField === "description" ? (
+              <section className="task-description-panel is-editing">
+                <h3>
+                  <AlignLeft size={16} />
+                  Description
+                </h3>
+                <textarea
+                  autoFocus
+                  className="description-control"
+                  defaultValue={task.description ?? ""}
+                  disabled={isSavingField}
+                  onBlur={handleDescriptionBlur}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      setEditingField(null);
+                    }
+                  }}
+                  placeholder="Contexte et resultat attendu"
+                  rows={4}
+                />
+              </section>
+            ) : (
+              <button
+                aria-label="Modifier la description"
+                className="task-description-panel description-button"
+                onClick={() => setEditingField("description")}
+                type="button"
+              >
+                <h3>
+                  <AlignLeft size={16} />
+                  Description
+                </h3>
+                <p>{task.description ?? "Aucune description renseignee."}</p>
+              </button>
             )}
           </div>
 
           <section className="timeline-section task-panel task-panel-avancement">
-            <h3>Avancement</h3>
+            <h3>
+              <MessageSquare size={16} />
+              Avancement
+            </h3>
             <Timeline
               empty="Aucune information d'avancement."
               items={(task.progress ?? []).map((item) => ({
@@ -497,6 +656,17 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
           </section>
 
           <div className="task-detail-actions">
+            <Button
+              onClick={() => {
+                setDeleteError(null);
+                setIsDeleteConfirmOpen(true);
+              }}
+              type="button"
+              variant="danger"
+            >
+              <Trash2 size={17} />
+              Supprimer
+            </Button>
             {task.status === "DONE" ? (
               <Button onClick={handleReopen} type="button" variant="secondary">
                 <RotateCcw size={17} />
@@ -513,13 +683,17 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
       </article>
 
       <aside className="task-history-panel task-panel task-panel-historique">
-        <h3>Historique</h3>
+        <h3>
+          <HistoryIcon size={16} />
+          Historique
+        </h3>
         <Timeline
           empty="Aucun changement enregistre."
           items={(task.history ?? []).map((item) => ({
             author: item.user?.name ?? "Utilisateur",
             content: historyLabel(item),
             date: item.createdAt,
+            icon: historyIcon(item.action),
             id: item.id,
           }))}
         />
@@ -563,13 +737,28 @@ export function TaskDetail({ id }: Readonly<{ id: string }>) {
   );
 }
 
-function Info({ label, value }: Readonly<{ label: string; value: string }>) {
+function Info({
+  icon: Icon,
+  label,
+  value,
+}: Readonly<{ icon: LucideIcon; label: string; value: string }>) {
   return (
-    <div>
-      <span>{label}</span>
-      <strong>{value}</strong>
+    <div className="meta-card">
+      <div className="meta-head">
+        <span className="meta-icon">
+          <Icon size={16} />
+        </span>
+        <span className="meta-label">{label}</span>
+      </div>
+      <strong className="meta-value">{value}</strong>
     </div>
   );
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  const letters = [parts[0]?.[0], parts[1]?.[0]].filter(Boolean);
+  return (letters.join("") || "?").toUpperCase();
 }
 
 function Timeline({
@@ -577,21 +766,39 @@ function Timeline({
   items,
 }: Readonly<{
   empty: string;
-  items: Array<{ author: string; content: string; date: string; id: string }>;
+  items: Array<{
+    author: string;
+    content: string;
+    date: string;
+    icon?: LucideIcon;
+    id: string;
+  }>;
 }>) {
   if (!items.length) {
-    return <p className="muted">{empty}</p>;
+    return <p className="timeline-empty muted">{empty}</p>;
   }
 
   return (
     <ol className="timeline">
-      {items.map((item) => (
-        <li key={item.id}>
-          <time>{formatDateTime(item.date)}</time>
-          <strong>{item.author}</strong>
-          <p>{item.content}</p>
-        </li>
-      ))}
+      {items.map((item) => {
+        const Icon = item.icon;
+        return (
+          <li key={item.id}>
+            <span className="timeline-rail">
+              <span className="timeline-marker">
+                {Icon ? <Icon size={13} /> : initials(item.author)}
+              </span>
+            </span>
+            <div className="timeline-body">
+              <div className="timeline-head">
+                <strong>{item.author}</strong>
+                <time>{formatDateTime(item.date)}</time>
+              </div>
+              <p>{item.content}</p>
+            </div>
+          </li>
+        );
+      })}
     </ol>
   );
 }
@@ -599,6 +806,7 @@ function Timeline({
 function historyLabel(item: NonNullable<Task["history"]>[number]) {
   const labels: Record<string, string> = {
     ASSIGNEE_CHANGED: "Responsable modifie",
+    DESCRIPTION_CHANGED: "Description modifiee",
     DUE_DATE_CHANGED: "Date de fin modifiee",
     PRIORITY_CHANGED: "Priorite modifiee",
     PROGRESS_ADDED: "Information d'avancement ajoutee",
@@ -613,6 +821,24 @@ function historyLabel(item: NonNullable<Task["history"]>[number]) {
   return `${labels[item.action] ?? item.action}${
     item.newValue ? ` : ${item.newValue}` : ""
   }`;
+}
+
+function historyIcon(action: string): LucideIcon {
+  const icons: Record<string, LucideIcon> = {
+    ASSIGNEE_CHANGED: UserCog,
+    DESCRIPTION_CHANGED: AlignLeft,
+    DUE_DATE_CHANGED: CalendarClock,
+    PRIORITY_CHANGED: Sparkles,
+    PROGRESS_ADDED: MessageSquare,
+    START_DATE_CHANGED: CalendarDays,
+    STATUS_CHANGED: RotateCcw,
+    TASK_COMPLETED: CheckCircle2,
+    TASK_CREATED: Sparkles,
+    TASK_REOPENED: RotateCcw,
+    TITLE_CHANGED: Pencil,
+  };
+
+  return icons[action] ?? HistoryIcon;
 }
 
 function formatDate(value?: string | null) {

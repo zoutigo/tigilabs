@@ -233,7 +233,7 @@ describe("TaskDetail", () => {
     expect(screen.getByText("Terminee")).toBeInTheDocument();
   });
 
-  it("edits a task and shows an error message when the update fails", async () => {
+  it("edits the title inline and retries after a failed update", async () => {
     apiMocks.getTask.mockResolvedValue(task);
     apiMocks.updateTask.mockRejectedValueOnce(new Error("offline"));
     apiMocks.updateTask.mockResolvedValueOnce({
@@ -243,18 +243,23 @@ describe("TaskDetail", () => {
 
     renderDetail();
 
-    fireEvent.click(await screen.findByRole("button", { name: "Modifier" }));
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Modifier l'intitule" }),
+    );
     const titleInput = screen.getByDisplayValue("Preparer les statuts");
     fireEvent.change(titleInput, {
       target: { value: "Preparer les statuts modifies" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
+    fireEvent.blur(titleInput);
 
+    await waitFor(() => {
+      expect(apiMocks.updateTask).toHaveBeenCalledTimes(1);
+    });
     expect(
       await screen.findByText(/La mise a jour n'a pas pu etre enregistree/),
     ).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Enregistrer" }));
+    fireEvent.blur(titleInput);
 
     await waitFor(() => {
       expect(apiMocks.updateTask).toHaveBeenCalledTimes(2);
