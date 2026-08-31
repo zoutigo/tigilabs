@@ -9,3 +9,4 @@ coverage
 !.env.example
 !docker/.env.example
 *.log
+.claude

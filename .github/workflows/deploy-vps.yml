@@ -88,7 +88,7 @@ jobs:
             NGINX_NETWORK="${NGINX_NETWORK}" docker compose -f docker/docker-compose.vps.yml --env-file docker/.env up -d --build
 
             echo "==> Run Prisma migrations in API container"
-            NGINX_NETWORK="${NGINX_NETWORK}" docker compose -f docker/docker-compose.vps.yml --env-file docker/.env exec -T api sh -lc "pnpm prisma:migrate:deploy"
+            NGINX_NETWORK="${NGINX_NETWORK}" docker compose -f docker/docker-compose.vps.yml --env-file docker/.env exec -T tigilabs-api sh -lc "pnpm prisma:migrate:deploy"
 
             echo "==> Reload shared nginx (containers were recreated, IPs changed)"
             docker exec nginx-proxy nginx -t
