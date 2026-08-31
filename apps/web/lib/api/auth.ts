@@ -71,17 +71,41 @@ export function changePassword(payload: ChangePasswordPayload) {
 }
 
 async function authRequest<T>(path: string, payload: unknown): Promise<T> {
-  const response = await fetch(path, {
-    body: JSON.stringify(payload),
-    headers: { "Content-Type": "application/json" },
-    method: "POST",
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+  } catch {
+    throw new Error(
+      "Impossible de contacter le serveur. Verifiez votre connexion et reessayez.",
+    );
+  }
 
-  const data = await response.json();
+  const data = await parseJsonResponse(response);
 
   if (!response.ok) {
-    throw new Error(data.message ?? "Une erreur est survenue.");
+    throw new Error(data?.message ?? "Une erreur est survenue.");
+  }
+
+  if (data === undefined) {
+    throw new Error("Reponse invalide du serveur. Reessayez.");
   }
 
   return data as T;
+}
+
+async function parseJsonResponse(response: Response) {
+  const text = await response.text();
+  if (!text) {
+    return undefined;
+  }
+
+  try {
+    return JSON.parse(text) as { message?: string };
+  } catch {
+    return undefined;
+  }
 }

@@ -28,11 +28,20 @@ export async function forwardAuthRequest(
   body: unknown,
   clientIp?: string,
 ) {
-  const response = await fetch(`${API_URL}${path}`, {
-    body: JSON.stringify(body),
-    headers: forwardedHeaders(clientIp),
-    method: "POST",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      body: JSON.stringify(body),
+      headers: forwardedHeaders(clientIp),
+      method: "POST",
+    });
+  } catch {
+    return NextResponse.json(
+      { message: "Le service est momentanement indisponible. Reessayez." },
+      { status: 502 },
+    );
+  }
+
   const payload = await readJson(response);
 
   if (!response.ok) {
