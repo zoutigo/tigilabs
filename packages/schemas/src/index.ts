@@ -164,6 +164,101 @@ export const siteSettingsSchema = z.object({
     .min(20, "La politique de confidentialite doit etre plus detaillee."),
 });
 
+export const eventPrivacySchema = z.enum(["NORMAL", "PRIVATE", "RESTRICTED"]);
+export const reminderChannelSchema = z.enum(["EMAIL", "IN_APP"]);
+export const recurrenceFrequencySchema = z.enum([
+  "DAILY",
+  "WEEKLY",
+  "BIWEEKLY",
+  "MONTHLY",
+  "YEARLY",
+  "CUSTOM",
+]);
+
+export const reminderInputSchema = z.object({
+  minutesBefore: z.number().int().min(0),
+  channel: reminderChannelSchema,
+});
+
+export const recurrenceInputSchema = z.object({
+  frequency: recurrenceFrequencySchema,
+  interval: z.number().int().min(1).optional(),
+  byWeekday: z.array(z.number().int().min(0).max(6)).optional(),
+  until: z.string().datetime().optional(),
+  count: z.number().int().min(1).optional(),
+});
+
+export const createEventSchema = z
+  .object({
+    title: z.string().trim().min(1, "Le titre est obligatoire."),
+    description: z.string().optional(),
+    startAt: z.string().datetime(),
+    endAt: z.string().datetime(),
+    allDay: z.boolean().optional(),
+    timezone: z.string().min(1),
+    location: z.string().optional(),
+    meetingUrl: z
+      .string()
+      .url("Lien de visioconference invalide.")
+      .optional()
+      .or(z.literal("")),
+    categoryId: z.string().optional(),
+    privacy: eventPrivacySchema.optional(),
+    participantIds: z.array(z.string()).optional(),
+    reminders: z.array(reminderInputSchema).optional(),
+    recurrence: recurrenceInputSchema.optional(),
+  })
+  .refine((value) => new Date(value.endAt) > new Date(value.startAt), {
+    message: "L'heure de fin doit etre apres l'heure de debut.",
+    path: ["endAt"],
+  });
+
+export const quickCreateEventSchema = z
+  .object({
+    title: z.string().trim().min(1, "Le titre est obligatoire."),
+    startAt: z.string().datetime(),
+    endAt: z.string().datetime(),
+    participantIds: z.array(z.string()).optional(),
+  })
+  .refine((value) => new Date(value.endAt) > new Date(value.startAt), {
+    message: "L'heure de fin doit etre apres l'heure de debut.",
+    path: ["endAt"],
+  });
+
+export const updateEventSchema = z.object({
+  title: z.string().trim().min(1).optional(),
+  description: z.string().optional(),
+  startAt: z.string().datetime().optional(),
+  endAt: z.string().datetime().optional(),
+  allDay: z.boolean().optional(),
+  location: z.string().optional(),
+  meetingUrl: z
+    .string()
+    .url("Lien de visioconference invalide.")
+    .optional()
+    .or(z.literal("")),
+  categoryId: z.string().nullable().optional(),
+  privacy: eventPrivacySchema.optional(),
+  participantIds: z.array(z.string()).optional(),
+  reminders: z.array(reminderInputSchema).optional(),
+});
+
+export const respondInvitationSchema = z.object({
+  status: z.enum(["ACCEPTED", "DECLINED", "TENTATIVE"]),
+});
+
+export const createCategorySchema = z.object({
+  name: z.string().trim().min(2, "Le nom doit contenir 2 caracteres minimum."),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Couleur invalide."),
+  isGlobal: z.boolean().optional(),
+});
+
+export type CreateEventInput = z.infer<typeof createEventSchema>;
+export type QuickCreateEventInput = z.infer<typeof quickCreateEventSchema>;
+export type UpdateEventInput = z.infer<typeof updateEventSchema>;
+export type RespondInvitationInput = z.infer<typeof respondInvitationSchema>;
+export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const privateRoutes = [
   "/dashboard",
   "/tasks",
+  "/calendar",
   "/users",
   "/contacts",
   "/settings",
@@ -29,6 +30,7 @@ export const config = {
   matcher: [
     "/dashboard/:path*",
     "/tasks/:path*",
+    "/calendar/:path*",
     "/users/:path*",
     "/contacts/:path*",
     "/settings/:path*",
