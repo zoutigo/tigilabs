@@ -268,11 +268,17 @@ export type CreateEventPayload = {
   timezone: string;
   location?: string;
   meetingUrl?: string;
+  generateMeetingLink?: boolean;
   categoryId?: string;
   privacy?: EventPrivacy;
   participantIds?: string[];
   reminders?: EventReminder[];
   recurrence?: RecurrenceInput;
+};
+
+export type SuggestedSlot = {
+  startAt: string;
+  endAt: string;
 };
 
 export type UpdateEventPayload = Partial<

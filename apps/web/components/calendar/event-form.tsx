@@ -1,7 +1,8 @@
 "use client";
 
 import { createEventSchema, type CreateEventInput } from "@tigilabs/schemas";
-import { AlignLeft, Link2, MapPin, Repeat } from "lucide-react";
+import { AlignLeft, Link2, MapPin, Repeat, Sparkles } from "lucide-react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type {
   CalendarCategory,
@@ -9,8 +10,10 @@ import type {
   EventPrivacy,
   EventReminder,
   RecurrenceFrequency,
+  SuggestedSlot,
   User,
 } from "@tigilabs/types";
+import { getSuggestedSlots } from "../../lib/api/calendar";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { CategorySelector } from "./category-selector";
@@ -26,6 +29,7 @@ export type EventFormValues = {
   allDay: boolean;
   location?: string;
   meetingUrl?: string;
+  generateMeetingLink: boolean;
   categoryId?: string;
   privacy: EventPrivacy;
   participantIds: string[];
@@ -59,6 +63,7 @@ const DEFAULT_VALUES: EventFormValues = {
   allDay: false,
   location: "",
   meetingUrl: "",
+  generateMeetingLink: false,
   categoryId: undefined,
   privacy: "NORMAL",
   participantIds: [],
@@ -104,6 +109,7 @@ export function EventForm({
       timezone,
       location: values.location || undefined,
       meetingUrl: values.meetingUrl || undefined,
+      generateMeetingLink: values.generateMeetingLink,
       categoryId: values.categoryId,
       privacy: values.privacy,
       participantIds: values.participantIds,
@@ -194,6 +200,10 @@ export function EventForm({
             <Link2 size={14} /> Lien de visioconference
           </span>
           <input placeholder="https://..." {...register("meetingUrl")} />
+          <label className="field-checkbox">
+            <input type="checkbox" {...register("generateMeetingLink")} />
+            Generer automatiquement un lien de visioconference
+          </label>
         </label>
       </div>
 
@@ -228,6 +238,18 @@ export function EventForm({
           onChange={(ids) => setValue("participantIds", ids)}
         />
       </label>
+
+      <SlotSuggestions
+        participantIds={watch("participantIds")}
+        currentUserId={currentUserId}
+        onPick={(slot) => {
+          const start = new Date(slot.startAt);
+          const end = new Date(slot.endAt);
+          setValue("date", start.toISOString().slice(0, 10));
+          setValue("startTime", start.toTimeString().slice(0, 5));
+          setValue("endTime", end.toTimeString().slice(0, 5));
+        }}
+      />
 
       <label className="field">
         <span>Rappels</span>
@@ -283,5 +305,83 @@ export function EventForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+function SlotSuggestions({
+  participantIds,
+  currentUserId,
+  onPick,
+}: Readonly<{
+  participantIds: string[];
+  currentUserId?: string;
+  onPick: (slot: SuggestedSlot) => void;
+}>) {
+  const [suggestions, setSuggestions] = useState<SuggestedSlot[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  if (!participantIds.length) {
+    return null;
+  }
+
+  async function handleSuggest() {
+    setIsLoading(true);
+    const from = new Date();
+    const to = new Date(from.getTime() + 7 * 24 * 60 * 60_000);
+
+    try {
+      const result = await getSuggestedSlots({
+        userIds: currentUserId
+          ? [currentUserId, ...participantIds]
+          : participantIds,
+        durationMinutes: 30,
+        from: from.toISOString(),
+        to: to.toISOString(),
+        limit: 4,
+      });
+      setSuggestions(result);
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <div className="slot-suggestions">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={handleSuggest}
+        disabled={isLoading}
+      >
+        <Sparkles size={14} />
+        {isLoading ? "Recherche..." : "Proposer des creneaux disponibles"}
+      </Button>
+      {suggestions ? (
+        suggestions.length ? (
+          <div className="slot-suggestions-list">
+            {suggestions.map((slot) => (
+              <button
+                type="button"
+                key={slot.startAt}
+                className="tl-button tl-button-secondary"
+                onClick={() => onPick(slot)}
+              >
+                {new Date(slot.startAt).toLocaleString("fr-FR", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">Aucun creneau disponible cette semaine.</p>
+        )
+      ) : null}
+    </div>
   );
 }

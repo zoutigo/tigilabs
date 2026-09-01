@@ -83,4 +83,61 @@ describe("AvailabilityService", () => {
     expect(availability.status).toBe("BUSY");
     expect(availability.conflicts).toHaveLength(2);
   });
+
+  describe("suggestSlots", () => {
+    it("suggests the first free business-hours slot", async () => {
+      prisma.event.findMany.mockResolvedValue([]);
+
+      const suggestions = await service.suggestSlots({
+        userIds: ["user-1"],
+        durationMinutes: 30,
+        searchFrom: new Date(2026, 1, 2, 8, 0), // Monday 08:00
+        searchTo: new Date(2026, 1, 2, 19, 0),
+      });
+
+      expect(suggestions[0]).toEqual({
+        startAt: new Date(2026, 1, 2, 8, 0).toISOString(),
+        endAt: new Date(2026, 1, 2, 8, 30).toISOString(),
+      });
+    });
+
+    it("skips a slot that overlaps an existing busy event", async () => {
+      prisma.event.findMany.mockResolvedValue([
+        {
+          startAt: new Date(2026, 1, 2, 8, 0),
+          endAt: new Date(2026, 1, 2, 9, 0),
+        },
+      ]);
+
+      const suggestions = await service.suggestSlots({
+        userIds: ["user-1"],
+        durationMinutes: 30,
+        searchFrom: new Date(2026, 1, 2, 8, 0),
+        searchTo: new Date(2026, 1, 2, 19, 0),
+      });
+
+      expect(suggestions[0].startAt).toBe(
+        new Date(2026, 1, 2, 9, 0).toISOString(),
+      );
+    });
+
+    it("never suggests a slot outside business hours or on a weekend", async () => {
+      prisma.event.findMany.mockResolvedValue([]);
+
+      const suggestions = await service.suggestSlots({
+        userIds: ["user-1"],
+        durationMinutes: 30,
+        searchFrom: new Date(2026, 1, 6, 18, 30), // Friday 18:30
+        searchTo: new Date(2026, 1, 9, 12, 0), // Monday noon
+        limit: 3,
+      });
+
+      for (const suggestion of suggestions) {
+        const start = new Date(suggestion.startAt);
+        expect(start.getDay()).not.toBe(0);
+        expect(start.getDay()).not.toBe(6);
+        expect(start.getHours()).toBeGreaterThanOrEqual(8);
+      }
+    });
+  });
 });

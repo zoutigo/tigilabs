@@ -202,6 +202,7 @@ export const createEventSchema = z
       .url("Lien de visioconference invalide.")
       .optional()
       .or(z.literal("")),
+    generateMeetingLink: z.boolean().optional(),
     categoryId: z.string().optional(),
     privacy: eventPrivacySchema.optional(),
     participantIds: z.array(z.string()).optional(),

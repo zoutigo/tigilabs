@@ -5,6 +5,7 @@ import type {
   EventHistoryEntry,
   ParticipantStatus,
   RecurrenceScope,
+  SuggestedSlot,
   UpdateEventPayload,
   UserAvailability,
 } from "@tigilabs/types";
@@ -205,6 +206,25 @@ export function getAvailability(userIds: string[], from: string, to: string) {
   const search = new URLSearchParams({ userIds: userIds.join(","), from, to });
   return apiClient<UserAvailability[]>(
     `/calendar/availability?${search.toString()}`,
+  );
+}
+
+export function getSuggestedSlots(params: {
+  userIds: string[];
+  durationMinutes: number;
+  from: string;
+  to: string;
+  limit?: number;
+}) {
+  const search = new URLSearchParams({
+    userIds: params.userIds.join(","),
+    durationMinutes: String(params.durationMinutes),
+    from: params.from,
+    to: params.to,
+    ...(params.limit ? { limit: String(params.limit) } : {}),
+  });
+  return apiClient<SuggestedSlot[]>(
+    `/calendar/availability/suggestions?${search.toString()}`,
   );
 }
 

@@ -4023,6 +4023,17 @@ textarea {
   gap: 6px;
 }
 
+.slot-suggestions {
+  display: grid;
+  gap: 8px;
+}
+
+.slot-suggestions-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 /* Event popover / detail */
 
 .event-popover {

@@ -45,6 +45,10 @@ export class CreateEventDto {
   @IsOptional()
   meetingUrl?: string;
 
+  @IsBoolean()
+  @IsOptional()
+  generateMeetingLink?: boolean;
+
   @IsString()
   @IsOptional()
   categoryId?: string;

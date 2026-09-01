@@ -83,6 +83,79 @@ export class AvailabilityService {
     return conflicts;
   }
 
+  /**
+   * Suggests the earliest free slots for every given user within a search
+   * window, restricted to business hours (08:00-19:00, Mon-Fri). Phase 3
+   * "disponibilite intelligente / creneaux automatiques", built entirely on
+   * top of the conflict data already computed for Phase 2 - no external
+   * service required.
+   */
+  async suggestSlots(params: {
+    userIds: string[];
+    durationMinutes: number;
+    searchFrom: Date;
+    searchTo: Date;
+    limit?: number;
+    stepMinutes?: number;
+    workingHours?: { startHour: number; endHour: number };
+  }) {
+    const limit = params.limit ?? 5;
+    const stepMinutes = params.stepMinutes ?? 30;
+    const workingHours = params.workingHours ?? { startHour: 8, endHour: 19 };
+
+    const busyEvents = params.userIds.length
+      ? await this.prisma.event.findMany({
+          where: {
+            status: "CONFIRMED",
+            startAt: { lt: params.searchTo },
+            endAt: { gt: params.searchFrom },
+            OR: [
+              { organizerId: { in: params.userIds } },
+              {
+                participants: {
+                  some: {
+                    userId: { in: params.userIds },
+                    status: { in: ["ACCEPTED", "PENDING", "TENTATIVE"] },
+                  },
+                },
+              },
+            ],
+          },
+          select: { startAt: true, endAt: true },
+        })
+      : [];
+
+    const durationMs = params.durationMinutes * 60_000;
+    const stepMs = stepMinutes * 60_000;
+    const suggestions: Array<{ startAt: string; endAt: string }> = [];
+
+    let cursor = roundUpToStep(params.searchFrom, stepMs);
+
+    while (
+      cursor.getTime() + durationMs <= params.searchTo.getTime() &&
+      suggestions.length < limit
+    ) {
+      const candidateEnd = new Date(cursor.getTime() + durationMs);
+
+      if (isWithinBusinessHours(cursor, candidateEnd, workingHours)) {
+        const overlaps = busyEvents.some(
+          (event) => event.startAt < candidateEnd && event.endAt > cursor,
+        );
+
+        if (!overlaps) {
+          suggestions.push({
+            startAt: cursor.toISOString(),
+            endAt: candidateEnd.toISOString(),
+          });
+        }
+      }
+
+      cursor = new Date(cursor.getTime() + stepMs);
+    }
+
+    return suggestions;
+  }
+
   async getAvailability(params: { userIds: string[]; from: Date; to: Date }) {
     const conflicts = await this.findConflicts({
       userIds: params.userIds,
@@ -104,4 +177,29 @@ export class AvailabilityService {
       };
     });
   }
+}
+
+function roundUpToStep(date: Date, stepMs: number) {
+  const rounded = Math.ceil(date.getTime() / stepMs) * stepMs;
+  return new Date(rounded);
+}
+
+function isWithinBusinessHours(
+  start: Date,
+  end: Date,
+  workingHours: { startHour: number; endHour: number },
+) {
+  const day = start.getDay();
+  if (day === 0 || day === 6) {
+    return false;
+  }
+
+  const startMinutes = start.getHours() * 60 + start.getMinutes();
+  const endMinutes = end.getHours() * 60 + end.getMinutes();
+
+  return (
+    startMinutes >= workingHours.startHour * 60 &&
+    endMinutes <= workingHours.endHour * 60 &&
+    start.toDateString() === end.toDateString()
+  );
 }

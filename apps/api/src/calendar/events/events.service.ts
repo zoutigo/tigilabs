@@ -17,6 +17,7 @@ import {
 import { RespondInvitationDto } from "./dto/respond-invitation.dto";
 import { UpdateEventDto } from "./dto/update-event.dto";
 import { EventsRepository, EventWithRelations } from "./events.repository";
+import { generateMeetingUrl } from "./meeting-link.util";
 import { generateOccurrences } from "./recurrence.util";
 
 export type AuthenticatedUser = {
@@ -111,6 +112,10 @@ export class EventsService {
       (id) => id !== user.id,
     );
 
+    const meetingUrl =
+      dto.meetingUrl ??
+      (dto.generateMeetingLink ? generateMeetingUrl(dto.title) : undefined);
+
     const occurrences = dto.recurrence
       ? generateOccurrences(
           {
@@ -158,7 +163,7 @@ export class EventsService {
             allDay: dto.allDay ?? false,
             timezone: dto.timezone,
             location: dto.location,
-            meetingUrl: dto.meetingUrl,
+            meetingUrl,
             privacy: dto.privacy ?? "NORMAL",
             organizer: { connect: { id: user.id } },
             category: dto.categoryId
