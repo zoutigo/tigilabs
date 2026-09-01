@@ -17,6 +17,8 @@ services:
       - ./.env
     environment:
       NODE_ENV: production
+    volumes:
+      - calendar-attachments:/data/calendar-attachments
     expose:
       - "3101"
     networks:
@@ -52,3 +54,6 @@ networks:
   nginx:
     external: true
     name: ${NGINX_NETWORK:-proxy}
+
+volumes:
+  calendar-attachments:

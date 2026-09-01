@@ -1,9 +1,11 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
+import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule } from "@nestjs/throttler";
 import { AuditModule } from "./audit/audit.module";
 import { AuthModule } from "./auth/auth.module";
+import { CalendarModule } from "./calendar/calendar.module";
 import configuration from "./config/configuration";
 import { validateEnv } from "./config/env.validation";
 import { AppThrottlerGuard } from "./common/guards/app-throttler.guard";
@@ -30,6 +32,7 @@ import { UsersModule } from "./users/users.module";
         ttl: 60_000,
       },
     ]),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthModule,
     UsersModule,
@@ -40,6 +43,7 @@ import { UsersModule } from "./users/users.module";
     ContactModule,
     SettingsModule,
     AuditModule,
+    CalendarModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: AppThrottlerGuard }],
 })
