@@ -66,6 +66,13 @@ model User {
   notifications    Notification[]
   auditLogs        AuditLog[]
   readContactMessages ContactMessage[]
+
+  organizedEvents         Event[]            @relation("EventOrganizer")
+  eventParticipations     EventParticipant[]
+  eventHistory            EventHistory[]
+  uploadedEventAttachments EventAttachment[]
+  calendarCategories      CalendarCategory[]
+  eventReminders          EventReminder[]
 }
 
 model AuthToken {
@@ -269,4 +276,190 @@ model ContactMessage {
   readBy   User?   @relation(fields: [readById], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
+}
+
+enum EventStatus {
+  CONFIRMED
+  CANCELLED
+}
+
+enum EventPrivacy {
+  NORMAL
+  PRIVATE
+  RESTRICTED
+}
+
+enum ParticipantStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  TENTATIVE
+}
+
+enum ReminderChannel {
+  EMAIL
+  IN_APP
+}
+
+enum RecurrenceFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  YEARLY
+  CUSTOM
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum JobType {
+  EVENT_INVITATION
+  EVENT_UPDATE
+  EVENT_CANCELLATION
+  EVENT_REMINDER
+}
+
+model CalendarCategory {
+  id        String   @id @default(cuid())
+  name      String
+  color     String
+  isGlobal  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  ownerId String?
+  owner   User?   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  events Event[]
+
+  @@index([ownerId])
+}
+
+model EventSeries {
+  id        String              @id @default(cuid())
+  frequency RecurrenceFrequency
+  interval  Int                 @default(1)
+  byWeekday Int[]               @default([])
+  until     DateTime?
+  count     Int?
+  createdAt DateTime            @default(now())
+
+  events Event[]
+}
+
+model Event {
+  id          String       @id @default(cuid())
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime
+  allDay      Boolean      @default(false)
+  timezone    String
+  location    String?
+  meetingUrl  String?
+  privacy     EventPrivacy @default(NORMAL)
+  status      EventStatus  @default(CONFIRMED)
+  cancelledAt DateTime?
+
+  recurrenceExceptionOf DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  categoryId String?
+  category   CalendarCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  organizerId String
+  organizer   User   @relation("EventOrganizer", fields: [organizerId], references: [id], onDelete: Restrict)
+
+  seriesId String?
+  series   EventSeries? @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+
+  participants EventParticipant[]
+  reminders    EventReminder[]
+  attachments  EventAttachment[]
+  history      EventHistory[]
+
+  @@index([organizerId, startAt])
+  @@index([startAt, endAt])
+  @@index([seriesId])
+}
+
+model EventParticipant {
+  eventId     String
+  userId      String
+  status      ParticipantStatus @default(PENDING)
+  respondedAt DateTime?
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+  @@index([userId, status])
+}
+
+model EventReminder {
+  id            String          @id @default(cuid())
+  minutesBefore Int
+  channel       ReminderChannel
+
+  eventId String
+  userId  String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, userId])
+}
+
+model EventAttachment {
+  id           String   @id @default(cuid())
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String
+  createdAt    DateTime @default(now())
+
+  eventId      String
+  uploadedById String
+
+  event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploadedBy User  @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([eventId])
+}
+
+model EventHistory {
+  id        String   @id @default(cuid())
+  action    String
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  eventId String
+  userId  String
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, createdAt])
+}
+
+model OutboxJob {
+  id           String    @id @default(cuid())
+  type         JobType
+  payload      Json
+  scheduledFor DateTime  @default(now())
+  status       JobStatus @default(PENDING)
+  attempts     Int       @default(0)
+  lastError    String?
+  createdAt    DateTime  @default(now())
+  processedAt  DateTime?
+
+  @@index([status, scheduledFor])
 }

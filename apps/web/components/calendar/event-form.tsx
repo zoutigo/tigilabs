@@ -1,0 +1,414 @@
+"use client";
+
+import { createEventSchema, type CreateEventInput } from "@tigilabs/schemas";
+import {
+  AlignLeft,
+  Bell,
+  CalendarClock,
+  Link2,
+  Lock,
+  MapPin,
+  Repeat,
+  Sparkles,
+  Tag,
+  Users,
+} from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import type {
+  CalendarCategory,
+  CreateEventPayload,
+  EventPrivacy,
+  EventReminder,
+  RecurrenceFrequency,
+  SuggestedSlot,
+  User,
+} from "@tigilabs/types";
+import { getSuggestedSlots } from "../../lib/api/calendar";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { CategorySelector } from "./category-selector";
+import { ParticipantPicker } from "./participant-picker";
+import { ReminderSelector } from "./reminder-selector";
+
+export type EventFormValues = {
+  title: string;
+  description?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  allDay: boolean;
+  location?: string;
+  meetingUrl?: string;
+  generateMeetingLink: boolean;
+  categoryId?: string;
+  privacy: EventPrivacy;
+  participantIds: string[];
+  reminders: EventReminder[];
+  recurrenceEnabled: boolean;
+  recurrenceFrequency: RecurrenceFrequency;
+  recurrenceInterval: number;
+  recurrenceUntil?: string;
+};
+
+type EventFormProps = {
+  defaultValues?: Partial<EventFormValues>;
+  users: User[];
+  categories: CalendarCategory[];
+  currentUserId?: string;
+  submitLabel: string;
+  onSubmit: (payload: CreateEventPayload) => Promise<void> | void;
+  onCancel: () => void;
+};
+
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const DEFAULT_VALUES: EventFormValues = {
+  title: "",
+  description: "",
+  date: todayIso(),
+  startTime: "09:00",
+  endTime: "10:00",
+  allDay: false,
+  location: "",
+  meetingUrl: "",
+  generateMeetingLink: false,
+  categoryId: undefined,
+  privacy: "NORMAL",
+  participantIds: [],
+  reminders: [{ minutesBefore: 30, channel: "EMAIL" }],
+  recurrenceEnabled: false,
+  recurrenceFrequency: "WEEKLY",
+  recurrenceInterval: 1,
+  recurrenceUntil: undefined,
+};
+
+export function EventForm({
+  defaultValues,
+  users,
+  categories,
+  currentUserId,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}: EventFormProps) {
+  const form = useForm<EventFormValues>({
+    defaultValues: { ...DEFAULT_VALUES, ...defaultValues },
+  });
+
+  const { watch, setValue, register, handleSubmit, formState } = form;
+  const allDay = watch("allDay");
+  const recurrenceEnabled = watch("recurrenceEnabled");
+
+  async function handleFormSubmit(values: EventFormValues) {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const startAt = values.allDay
+      ? new Date(`${values.date}T00:00:00`).toISOString()
+      : new Date(`${values.date}T${values.startTime}:00`).toISOString();
+    const endAt = values.allDay
+      ? new Date(`${values.date}T23:59:59`).toISOString()
+      : new Date(`${values.date}T${values.endTime}:00`).toISOString();
+
+    const candidate: CreateEventInput = {
+      title: values.title,
+      description: values.description || undefined,
+      startAt,
+      endAt,
+      allDay: values.allDay,
+      timezone,
+      location: values.location || undefined,
+      meetingUrl: values.meetingUrl || undefined,
+      generateMeetingLink: values.generateMeetingLink,
+      categoryId: values.categoryId,
+      privacy: values.privacy,
+      participantIds: values.participantIds,
+      reminders: values.reminders,
+      recurrence: values.recurrenceEnabled
+        ? {
+            frequency: values.recurrenceFrequency,
+            interval: values.recurrenceInterval,
+            until: values.recurrenceUntil
+              ? new Date(`${values.recurrenceUntil}T23:59:59`).toISOString()
+              : undefined,
+          }
+        : undefined,
+    };
+
+    const parsed = createEventSchema.safeParse(candidate);
+    if (!parsed.success) {
+      form.setError("root", {
+        message: parsed.error.issues[0]?.message ?? "Formulaire invalide.",
+      });
+      return;
+    }
+
+    await onSubmit(candidate);
+  }
+
+  return (
+    <form
+      className="form event-form"
+      onSubmit={handleSubmit(handleFormSubmit)}
+      noValidate
+    >
+      <div className="event-form-section">
+        <Input
+          label="Titre"
+          placeholder="Reunion preparation deploiement"
+          error={formState.errors.title?.message}
+          {...register("title", { required: "Le titre est obligatoire." })}
+        />
+
+        <label className="field">
+          <span>
+            <AlignLeft size={14} /> Description
+          </span>
+          <textarea
+            rows={3}
+            placeholder="Contexte, ordre du jour..."
+            {...register("description")}
+          />
+        </label>
+      </div>
+
+      <div className="event-form-section">
+        <div className="event-form-section-head">
+          <span className="event-form-section-title">
+            <CalendarClock size={13} /> Quand
+          </span>
+          <label className="field-checkbox">
+            <input type="checkbox" {...register("allDay")} />
+            Toute la journee
+          </label>
+        </div>
+
+        <div className="event-form-row">
+          <Input
+            label="Date"
+            type="date"
+            {...register("date", { required: true })}
+          />
+          {!allDay ? (
+            <>
+              <Input
+                label="Debut"
+                type="time"
+                {...register("startTime", { required: !allDay })}
+              />
+              <Input
+                label="Fin"
+                type="time"
+                {...register("endTime", { required: !allDay })}
+              />
+            </>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <MapPin size={13} /> Lieu et visioconference
+        </span>
+        <div className="event-form-row">
+          <Input
+            label="Lieu"
+            placeholder="Bureau Tigilabs Douala"
+            {...register("location")}
+          />
+          <label className="field">
+            <span>
+              <Link2 size={14} /> Lien de visioconference
+            </span>
+            <input placeholder="https://..." {...register("meetingUrl")} />
+          </label>
+        </div>
+        <label className="field-checkbox">
+          <input type="checkbox" {...register("generateMeetingLink")} />
+          Generer automatiquement un lien de visioconference
+        </label>
+      </div>
+
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <Tag size={13} /> Categorie et confidentialite
+        </span>
+        <CategorySelector
+          categories={categories}
+          value={watch("categoryId")}
+          onChange={(value) => setValue("categoryId", value)}
+        />
+        <label className="field">
+          <span>
+            <Lock size={14} /> Confidentialite
+          </span>
+          <select {...register("privacy")}>
+            <option value="NORMAL">Normal</option>
+            <option value="PRIVATE">Prive (les autres voient "Occupe")</option>
+            <option value="RESTRICTED">
+              Restreint (organisateur + participants)
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <Users size={13} /> Participants
+        </span>
+        <ParticipantPicker
+          users={users}
+          selectedIds={watch("participantIds")}
+          excludeUserId={currentUserId}
+          onChange={(ids) => setValue("participantIds", ids)}
+        />
+        <SlotSuggestions
+          participantIds={watch("participantIds")}
+          currentUserId={currentUserId}
+          onPick={(slot) => {
+            const start = new Date(slot.startAt);
+            const end = new Date(slot.endAt);
+            setValue("date", start.toISOString().slice(0, 10));
+            setValue("startTime", start.toTimeString().slice(0, 5));
+            setValue("endTime", end.toTimeString().slice(0, 5));
+          }}
+        />
+      </div>
+
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <Bell size={13} /> Rappels
+        </span>
+        <ReminderSelector
+          value={watch("reminders")}
+          onChange={(reminders) => setValue("reminders", reminders)}
+        />
+      </div>
+
+      <div className="event-form-section">
+        <label className="field-checkbox">
+          <input type="checkbox" {...register("recurrenceEnabled")} />
+          <Repeat size={14} /> Evenement recurrent
+        </label>
+
+        {recurrenceEnabled ? (
+          <div className="event-form-row">
+            <label className="field">
+              <span>Frequence</span>
+              <select {...register("recurrenceFrequency")}>
+                <option value="DAILY">Tous les jours</option>
+                <option value="WEEKLY">Chaque semaine</option>
+                <option value="BIWEEKLY">Toutes les 2 semaines</option>
+                <option value="MONTHLY">Chaque mois</option>
+                <option value="YEARLY">Chaque annee</option>
+              </select>
+            </label>
+            <Input
+              label="Intervalle"
+              type="number"
+              min={1}
+              {...register("recurrenceInterval", { valueAsNumber: true })}
+            />
+            <Input
+              label="Jusqu'au"
+              type="date"
+              {...register("recurrenceUntil")}
+            />
+          </div>
+        ) : null}
+      </div>
+
+      {formState.errors.root?.message ? (
+        <p className="field-error">{formState.errors.root.message}</p>
+      ) : null}
+
+      <div className="button-row">
+        <Button type="submit" disabled={formState.isSubmitting}>
+          {submitLabel}
+        </Button>
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          Annuler
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+function SlotSuggestions({
+  participantIds,
+  currentUserId,
+  onPick,
+}: Readonly<{
+  participantIds: string[];
+  currentUserId?: string;
+  onPick: (slot: SuggestedSlot) => void;
+}>) {
+  const [suggestions, setSuggestions] = useState<SuggestedSlot[] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  if (!participantIds.length) {
+    return null;
+  }
+
+  async function handleSuggest() {
+    setIsLoading(true);
+    const from = new Date();
+    const to = new Date(from.getTime() + 7 * 24 * 60 * 60_000);
+
+    try {
+      const result = await getSuggestedSlots({
+        userIds: currentUserId
+          ? [currentUserId, ...participantIds]
+          : participantIds,
+        durationMinutes: 30,
+        from: from.toISOString(),
+        to: to.toISOString(),
+        limit: 4,
+      });
+      setSuggestions(result);
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  return (
+    <div className="slot-suggestions">
+      <Button
+        type="button"
+        variant="secondary"
+        onClick={handleSuggest}
+        disabled={isLoading}
+      >
+        <Sparkles size={14} />
+        {isLoading ? "Recherche..." : "Proposer des creneaux disponibles"}
+      </Button>
+      {suggestions ? (
+        suggestions.length ? (
+          <div className="slot-suggestions-list">
+            {suggestions.map((slot) => (
+              <button
+                type="button"
+                key={slot.startAt}
+                className="tl-button tl-button-secondary"
+                onClick={() => onPick(slot)}
+              >
+                {new Date(slot.startAt).toLocaleString("fr-FR", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="muted">Aucun creneau disponible cette semaine.</p>
+        )
+      ) : null}
+    </div>
+  );
+}

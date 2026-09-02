@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  CalendarDays,
   CheckSquare,
   CircleUserRound,
   LayoutDashboard,
@@ -30,6 +31,12 @@ export const privateNavLinks: NavEntry[] = [
     icon: LayoutDashboard,
     id: "dashboard",
     label: "Tableau de bord",
+  },
+  {
+    href: "/calendar",
+    icon: CalendarDays,
+    id: "calendar",
+    label: "Agenda",
   },
   {
     children: [

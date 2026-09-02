@@ -2,6 +2,7 @@
 
 import { AlarmClock, ArrowRight, ClipboardList, Users } from "lucide-react";
 import Link from "next/link";
+import { UpcomingEventsWidget } from "../../../components/calendar/upcoming-events-widget";
 import { useTaskDashboard } from "../../../hooks/use-tasks";
 import { useUsers } from "../../../hooks/use-users";
 
@@ -17,6 +18,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="dashboard-grid">
+        <UpcomingEventsWidget />
+
         <section className="dashboard-panel">
           <div className="panel-heading">
             <h3>

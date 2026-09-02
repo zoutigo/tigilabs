@@ -152,6 +152,147 @@ export type ContactMessage = {
   readAt?: string | null;
 };
 
+export type EventStatus = "CONFIRMED" | "CANCELLED";
+export type EventPrivacy = "NORMAL" | "PRIVATE" | "RESTRICTED";
+export type ParticipantStatus =
+  "PENDING" | "ACCEPTED" | "DECLINED" | "TENTATIVE";
+export type ReminderChannel = "EMAIL" | "IN_APP";
+export type RecurrenceFrequency =
+  "DAILY" | "WEEKLY" | "BIWEEKLY" | "MONTHLY" | "YEARLY" | "CUSTOM";
+export type RecurrenceScope = "this" | "following" | "all";
+
+export type CalendarCategory = {
+  id: string;
+  name: string;
+  color: string;
+  isGlobal: boolean;
+  ownerId?: string | null;
+};
+
+export type EventSeries = {
+  id: string;
+  frequency: RecurrenceFrequency;
+  interval: number;
+  byWeekday: number[];
+  until?: string | null;
+  count?: number | null;
+};
+
+export type EventParticipant = {
+  eventId: string;
+  userId: string;
+  status: ParticipantStatus;
+  respondedAt?: string | null;
+  user: User;
+};
+
+export type EventReminder = {
+  id?: string;
+  eventId?: string;
+  userId?: string;
+  minutesBefore: number;
+  channel: ReminderChannel;
+};
+
+export type EventAttachment = {
+  id: string;
+  eventId: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedById: string;
+  uploadedBy?: User;
+  createdAt: string;
+};
+
+export type EventHistoryEntry = {
+  id: string;
+  eventId: string;
+  userId: string;
+  action: string;
+  oldValue?: string | null;
+  newValue?: string | null;
+  createdAt: string;
+  user?: User;
+};
+
+export type EventConflict = {
+  userId: string;
+  userName: string;
+  conflictingEventId: string;
+  conflictingEventTitle: string;
+  startAt: string;
+  endAt: string;
+};
+
+export type RecurrenceInput = {
+  frequency: RecurrenceFrequency;
+  interval?: number;
+  byWeekday?: number[];
+  until?: string;
+  count?: number;
+};
+
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  description?: string | null;
+  startAt: string;
+  endAt: string;
+  allDay: boolean;
+  timezone?: string;
+  location?: string | null;
+  meetingUrl?: string | null;
+  privacy: EventPrivacy;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  organizerId: string;
+  organizer?: User;
+  categoryId?: string | null;
+  category?: CalendarCategory | null;
+  seriesId?: string | null;
+  series?: EventSeries | null;
+  participants: EventParticipant[];
+  reminders: EventReminder[];
+  attachments: EventAttachment[];
+  conflicts?: EventConflict[];
+  occurrenceCount?: number;
+};
+
+export type CreateEventPayload = {
+  title: string;
+  description?: string;
+  startAt: string;
+  endAt: string;
+  allDay?: boolean;
+  timezone: string;
+  location?: string;
+  meetingUrl?: string;
+  generateMeetingLink?: boolean;
+  categoryId?: string;
+  privacy?: EventPrivacy;
+  participantIds?: string[];
+  reminders?: EventReminder[];
+  recurrence?: RecurrenceInput;
+};
+
+export type SuggestedSlot = {
+  startAt: string;
+  endAt: string;
+};
+
+export type UpdateEventPayload = Partial<
+  Omit<CreateEventPayload, "timezone" | "recurrence">
+>;
+
+export type AvailabilityStatus = "AVAILABLE" | "PARTIALLY_AVAILABLE" | "BUSY";
+
+export type UserAvailability = {
+  userId: string;
+  status: AvailabilityStatus;
+  conflicts: EventConflict[];
+};
+
 export type SiteSettings = {
   companyName: string;
   ownerName: string;

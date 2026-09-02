@@ -48,6 +48,38 @@ const PERMISSIONS: Array<{
     action: "manage",
     description: "Gerer les parametres du site",
   },
+  {
+    subject: "calendar",
+    action: "event.create",
+    description: "Creer des evenements d'agenda",
+  },
+  {
+    subject: "calendar",
+    action: "event.manage_others",
+    description:
+      "Modifier/annuler les evenements dont on n'est pas organisateur",
+  },
+  {
+    subject: "calendar",
+    action: "category.manage_global",
+    description: "Creer/gerer les categories d'agenda globales",
+  },
+  {
+    subject: "calendar",
+    action: "attachment.delete_others",
+    description: "Supprimer une piece jointe uploadee par un autre utilisateur",
+  },
+];
+
+const DEFAULT_CALENDAR_CATEGORIES: Array<{ name: string; color: string }> = [
+  { name: "Reunion interne", color: "#2563EB" },
+  { name: "Client / Ecole", color: "#16A34A" },
+  { name: "Deploiement", color: "#7C3AED" },
+  { name: "Commercial", color: "#EA580C" },
+  { name: "Important / Direction", color: "#DC2626" },
+  { name: "Administratif", color: "#CA8A04" },
+  { name: "Formation", color: "#0891B2" },
+  { name: "Personnel", color: "#374151" },
 ];
 
 const ADMIN_ROLE_NAME = "ADMIN";
@@ -116,6 +148,26 @@ async function main() {
     create: { id: DEFAULT_SITE_SETTINGS_ID, ...DEFAULT_SITE_SETTINGS },
     update: {},
   });
+
+  const existingGlobalCategories = await prisma.calendarCategory.findMany({
+    where: { isGlobal: true },
+    select: { name: true },
+  });
+  const existingCategoryNames = new Set(
+    existingGlobalCategories.map((category) => category.name),
+  );
+  const categoriesToCreate = DEFAULT_CALENDAR_CATEGORIES.filter(
+    (category) => !existingCategoryNames.has(category.name),
+  );
+
+  if (categoriesToCreate.length) {
+    await prisma.calendarCategory.createMany({
+      data: categoriesToCreate.map((category) => ({
+        ...category,
+        isGlobal: true,
+      })),
+    });
+  }
 
   console.log(
     `Seed RBAC: ${permissions.length} permissions, role ${ADMIN_ROLE_NAME} assigne a ${usersWithoutRole.length} utilisateur(s) sans role.`,
