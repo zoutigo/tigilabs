@@ -10,3 +10,4 @@ coverage
 !docker/.env.example
 *.log
 .claude
+/branding
