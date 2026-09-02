@@ -20,7 +20,9 @@ export default async function ContactPage() {
       <section className="section contact-section">
         <Reveal className="contact-info">
           <span className="eyebrow">Contact</span>
-          <h1>Parlons de votre projet</h1>
+          <h1>
+            Parlons de votre <span className="text-gradient">projet</span>
+          </h1>
           <p className="muted">
             Presentez votre besoin et l&apos;equipe Tigilabs revient vers vous
             rapidement.

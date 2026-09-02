@@ -36,7 +36,10 @@ export default function AboutPage() {
       <section className="hero about-hero">
         <Reveal className="hero-copy">
           <span className="eyebrow">A propos</span>
-          <h1>Une societe camerounaise de solutions numeriques</h1>
+          <h1>
+            Une societe <span className="text-gradient">camerounaise</span> de
+            solutions numeriques
+          </h1>
           <p>
             Tigilabs construit des outils metier fiables, maintenables et
             adaptes aux realites operationnelles locales : plateformes web,

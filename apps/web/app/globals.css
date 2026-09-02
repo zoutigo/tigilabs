@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap");
 
 :root {
   color-scheme: light;
@@ -76,6 +76,36 @@
   --fs-stat-label: 12px; /* KPI metric label */
   --fs-stat-sub: 11px; /* KPI metric subtitle */
   --fs-hero: clamp(38px, 6vw, 72px); /* public hero heading */
+
+  /*
+   * Public marketing palette ("Sunrise"). Scoped to the (public) route
+   * group only - private/auth screens keep the calmer --primary/--accent
+   * pair untouched. Named after the palette this was designed around:
+   * an African-sunrise gradient (indigo night into orange/gold horizon)
+   * standing in for the flat corporate blue used elsewhere in the app.
+   */
+  --pub-ink: #150f3c;
+  --pub-indigo: #4b2fd6;
+  --pub-indigo-deep: #2f1f8f;
+  --pub-orange: #ff6a3d;
+  --pub-gold: #ffb703;
+  --pub-emerald: #12b76a;
+  --pub-cream: #fff8ef;
+  --pub-cream-strong: #fff1e0;
+  --gradient-sunrise: linear-gradient(
+    115deg,
+    var(--pub-indigo) 0%,
+    #a238c9 42%,
+    var(--pub-orange) 72%,
+    var(--pub-gold) 100%
+  );
+  --gradient-sunrise-soft: linear-gradient(
+    115deg,
+    rgba(75, 47, 214, 0.12) 0%,
+    rgba(162, 56, 201, 0.1) 42%,
+    rgba(255, 106, 61, 0.12) 72%,
+    rgba(255, 183, 3, 0.14) 100%
+  );
 }
 
 * {
@@ -4272,5 +4302,433 @@ textarea {
 
   .modal-header {
     padding: 14px 18px;
+  }
+}
+
+/* ==========================================================================
+   Public marketing pages - "Sunrise" redesign
+   Scoped to .public-shell (home / solutions / about / contact / privacy)
+   so the private app and auth screens keep their calmer palette untouched.
+   ========================================================================== */
+
+.public-shell {
+  background: var(--pub-cream);
+}
+
+.public-shell h1,
+.public-shell h2,
+.public-shell .stat-item strong {
+  font-family:
+    "Space Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  color: var(--pub-ink);
+  letter-spacing: -0.01em;
+}
+
+.public-shell .text-gradient {
+  background: var(--gradient-sunrise);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Header */
+
+.public-shell .public-header {
+  background: rgba(255, 248, 239, 0.86);
+  border-bottom: 1px solid rgba(21, 15, 60, 0.08);
+}
+
+.public-shell .public-nav-links a {
+  position: relative;
+}
+
+.public-shell .public-nav-links a::after {
+  background: var(--gradient-sunrise);
+  border-radius: 999px;
+  bottom: -6px;
+  content: "";
+  height: 3px;
+  left: 0;
+  position: absolute;
+  right: 100%;
+  transition: right 0.25s ease;
+}
+
+.public-shell .public-nav-links a.is-active::after,
+.public-shell .public-nav-links a:hover::after {
+  right: 0;
+}
+
+.public-shell .public-nav-links a.is-active,
+.public-shell .public-nav-links a:hover {
+  color: var(--pub-ink);
+}
+
+.public-shell .public-nav-cta {
+  background: var(--gradient-sunrise);
+  box-shadow: 0 8px 20px rgba(75, 47, 214, 0.28);
+  font-weight: 700;
+}
+
+/* Hero */
+
+.public-shell .hero {
+  isolation: isolate;
+  position: relative;
+}
+
+.public-shell .hero::before {
+  background:
+    radial-gradient(
+      560px circle at 10% 15%,
+      rgba(75, 47, 214, 0.22),
+      transparent 60%
+    ),
+    radial-gradient(
+      520px circle at 92% 5%,
+      rgba(255, 183, 3, 0.3),
+      transparent 55%
+    ),
+    radial-gradient(
+      600px circle at 80% 95%,
+      rgba(255, 106, 61, 0.22),
+      transparent 60%
+    );
+  content: "";
+  inset: -12% -8%;
+  position: absolute;
+  z-index: -1;
+}
+
+.public-shell .eyebrow {
+  background: #ffffff;
+  border: 1px solid rgba(75, 47, 214, 0.18);
+  border-radius: 999px;
+  box-shadow: 0 2px 10px rgba(21, 15, 60, 0.06);
+  color: var(--pub-indigo);
+  padding: 6px 14px;
+}
+
+.public-shell .eyebrow-product {
+  background: var(--pub-cream-strong);
+  border-color: rgba(255, 183, 3, 0.4);
+  color: #9a5b00;
+}
+
+.public-shell .hero-visual {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.92),
+    rgba(255, 248, 239, 0.55)
+  );
+  border: 1px solid rgba(21, 15, 60, 0.08);
+  box-shadow: 0 24px 48px rgba(21, 15, 60, 0.12);
+}
+
+.public-shell .hero-visual-card {
+  background: #ffffff;
+  border: 1px solid rgba(21, 15, 60, 0.06);
+  border-left: 3px solid var(--pub-indigo);
+  box-shadow: 0 10px 24px rgba(21, 15, 60, 0.08);
+}
+
+.public-shell .hero-visual-card:nth-of-type(2) {
+  border-left-color: var(--pub-orange);
+}
+
+.public-shell .hero-visual-card:nth-of-type(3) {
+  border-left-color: var(--pub-gold);
+}
+
+/* Stat band */
+
+.public-shell .stat-row-section {
+  background: var(--gradient-sunrise);
+  border: none;
+}
+
+.public-shell .stat-item span {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.public-shell .stat-item strong {
+  text-shadow: 0 2px 14px rgba(21, 15, 60, 0.25);
+}
+
+/* Service / solution cards */
+
+.public-shell .services-grid > *,
+.public-shell .solutions-grid > * {
+  background: #ffffff;
+  border: 1px solid rgba(21, 15, 60, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  position: relative;
+}
+
+.public-shell .services-grid > *::before,
+.public-shell .solutions-grid > *::before {
+  background: var(--gradient-sunrise);
+  content: "";
+  height: 4px;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transition: opacity 0.2s ease;
+}
+
+.public-shell .services-grid > *:hover::before,
+.public-shell .solutions-grid > *:hover::before {
+  opacity: 1;
+}
+
+.public-shell .services-grid > *:hover,
+.public-shell .solutions-grid > *:hover {
+  box-shadow: 0 20px 40px rgba(75, 47, 214, 0.16);
+}
+
+.public-shell .services-grid > *:nth-child(4n + 1) .service-icon,
+.public-shell .solutions-grid > *:nth-child(4n + 1) .service-icon {
+  background: rgba(75, 47, 214, 0.12);
+  color: var(--pub-indigo);
+}
+
+.public-shell .services-grid > *:nth-child(4n + 2) .service-icon,
+.public-shell .solutions-grid > *:nth-child(4n + 2) .service-icon {
+  background: rgba(255, 106, 61, 0.14);
+  color: var(--pub-orange);
+}
+
+.public-shell .services-grid > *:nth-child(4n + 3) .service-icon,
+.public-shell .solutions-grid > *:nth-child(4n + 3) .service-icon {
+  background: rgba(162, 56, 201, 0.14);
+  color: #a238c9;
+}
+
+.public-shell .services-grid > *:nth-child(4n + 4) .service-icon,
+.public-shell .solutions-grid > *:nth-child(4n + 4) .service-icon {
+  background: rgba(255, 183, 3, 0.18);
+  color: #9a6b00;
+}
+
+/* Timeline */
+
+.public-shell .timeline {
+  position: relative;
+}
+
+.public-shell .timeline::before {
+  background: var(--gradient-sunrise-soft);
+  content: "";
+  height: 2px;
+  left: 6%;
+  position: absolute;
+  right: 6%;
+  top: 32px;
+  z-index: -1;
+}
+
+.public-shell .timeline-step {
+  background: #ffffff;
+  border: 1px solid rgba(21, 15, 60, 0.08);
+  border-radius: 16px;
+}
+
+.public-shell .timeline-index {
+  background: var(--gradient-sunrise);
+  box-shadow: 0 8px 18px rgba(255, 106, 61, 0.35);
+}
+
+.public-shell .timeline-step svg {
+  color: var(--pub-indigo);
+}
+
+/* Solution spotlight */
+
+.public-shell .solutions-showcase .solution-spotlight {
+  background: var(--gradient-sunrise);
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(75, 47, 214, 0.24);
+  color: #ffffff;
+}
+
+.public-shell .solutions-showcase .solution-spotlight .eyebrow {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: none;
+  color: #ffffff;
+}
+
+.public-shell .solutions-showcase .solution-spotlight h2 {
+  color: #ffffff;
+}
+
+.public-shell .solutions-showcase .solution-spotlight .muted {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.public-shell .solution-spotlight-visual {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.public-shell .solutions-showcase .tl-button-secondary {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: var(--pub-indigo);
+}
+
+/* CTA */
+
+.public-shell .cta-section .cta-card {
+  background: var(--gradient-sunrise);
+  border: none;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(75, 47, 214, 0.28);
+  color: #ffffff;
+}
+
+.public-shell .cta-section .cta-card h2 {
+  color: #ffffff;
+}
+
+.public-shell .cta-section .cta-card .muted {
+  color: rgba(255, 255, 255, 0.86);
+}
+
+.public-shell .cta-section .cta-card .tl-button {
+  background: #ffffff;
+  border-color: #ffffff;
+  box-shadow: none;
+  color: var(--pub-indigo);
+}
+
+/* Product notice (Scolive) */
+
+.public-shell .product-notice {
+  background: var(--pub-cream-strong);
+  border-color: rgba(255, 183, 3, 0.4);
+}
+
+.public-shell .product-notice svg {
+  color: var(--pub-orange);
+}
+
+/* Contact */
+
+.public-shell .contact-info-card {
+  background: #ffffff;
+  border: 1px solid rgba(21, 15, 60, 0.08);
+  border-radius: 16px;
+}
+
+.public-shell .contact-info-item svg {
+  color: var(--pub-indigo);
+}
+
+.public-shell .contact-form-card {
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.public-shell .contact-form-card::before {
+  background: var(--gradient-sunrise);
+  content: "";
+  height: 4px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+/* Buttons */
+
+.public-shell .tl-button {
+  background: var(--gradient-sunrise);
+  border: none;
+  box-shadow: 0 12px 24px rgba(75, 47, 214, 0.28);
+}
+
+.public-shell .tl-button-ghost {
+  background: rgba(75, 47, 214, 0.08);
+  box-shadow: none;
+  color: var(--pub-indigo);
+}
+
+.public-shell .tl-button-secondary {
+  background: #ffffff;
+  border: 1px solid rgba(21, 15, 60, 0.16);
+  box-shadow: none;
+  color: var(--pub-ink);
+}
+
+/* Footer */
+
+.public-shell .public-footer {
+  background: var(--pub-ink);
+  border-top: none;
+  color: rgba(255, 255, 255, 0.7);
+  position: relative;
+}
+
+.public-shell .public-footer::before {
+  background: var(--gradient-sunrise);
+  content: "";
+  height: 4px;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.public-shell .public-footer .tigilabs-logo-copy strong {
+  --logo-word-1: #ffffff;
+  --logo-word-2: var(--pub-gold);
+}
+
+.public-shell .public-footer .tigilabs-logo-copy small {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.public-shell .public-footer-brand .muted {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.public-shell .public-footer-col h4 {
+  color: #ffffff;
+}
+
+.public-shell .public-footer-col a,
+.public-shell .public-footer-contact-item {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.public-shell .public-footer-col a:hover {
+  color: var(--pub-gold);
+}
+
+.public-shell .public-footer-bottom {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+.public-shell .public-footer-bottom span:first-child {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.public-shell .public-footer-bottom .muted {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 800px) {
+  .public-shell .hero::before {
+    inset: -6% -4%;
+  }
+
+  .public-shell .timeline::before {
+    display: none;
   }
 }
