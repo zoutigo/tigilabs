@@ -60,7 +60,10 @@ export default function ScolivePage() {
           <span className="eyebrow eyebrow-product">
             <GraduationCap size={14} aria-hidden="true" /> Produit independant
           </span>
-          <h1>Scolive, la plateforme de gestion scolaire de Tigilabs</h1>
+          <h1>
+            <span className="text-gradient">Scolive</span>, la plateforme de
+            gestion scolaire de Tigilabs
+          </h1>
           <p>
             Scolive accompagne les etablissements scolaires dans le suivi
             administratif, pedagogique et operationnel au quotidien, du primaire

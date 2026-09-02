@@ -76,7 +76,9 @@ export default function HomePage() {
         <Reveal className="hero-copy">
           <span className="eyebrow">Solutions numeriques</span>
           <h1>
-            Des plateformes numeriques robustes pour organisations exigeantes
+            Des plateformes numeriques{" "}
+            <span className="text-gradient">robustes</span> pour organisations
+            exigeantes
           </h1>
           <p>
             Tigilabs concoit et developpe des outils qui structurent vos
