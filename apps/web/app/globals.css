@@ -579,7 +579,11 @@ textarea {
   position: relative;
 }
 
-.auth-shell-brand .tigilabs-logo-copy strong,
+.auth-shell-brand .tigilabs-logo-copy strong {
+  --logo-word-1: #ffffff;
+  --logo-word-2: var(--accent);
+}
+
 .auth-shell-brand .tigilabs-logo-copy small {
   color: #ffffff;
 }
@@ -2091,11 +2095,20 @@ textarea {
 }
 
 .tigilabs-logo-copy strong {
-  color: currentColor;
+  --logo-word-1: var(--foreground);
+  --logo-word-2: var(--primary);
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1;
+}
+
+.logo-word--tigi {
+  color: var(--logo-word-1);
+}
+
+.logo-word--labs {
+  color: var(--logo-word-2);
 }
 
 .tigilabs-logo-copy small {
@@ -2113,6 +2126,11 @@ textarea {
   flex-direction: column;
   min-height: 100vh;
   padding: 22px 14px 16px;
+}
+
+.sidebar .tigilabs-logo-copy strong {
+  --logo-word-1: var(--sidebar-text);
+  --logo-word-2: var(--accent);
 }
 
 .sidebar nav {

@@ -26,7 +26,10 @@ export function TigilabsLogo({
         <path d="M19.2 5h8.2v11.8l-8.2 8.2V5Z" fill="#0d1b2a" opacity=".18" />
       </svg>
       <span className="tigilabs-logo-copy">
-        <strong>TIGILABS</strong>
+        <strong>
+          <span className="logo-word logo-word--tigi">TIGI</span>
+          <span className="logo-word logo-word--labs">LABS</span>
+        </strong>
         {!compact ? <small>Solutions numeriques</small> : null}
       </span>
     </span>
