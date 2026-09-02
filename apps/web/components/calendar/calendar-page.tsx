@@ -5,6 +5,7 @@ import type {
   CalendarEvent,
   CreateEventPayload,
   ParticipantStatus,
+  UpdateEventPayload,
 } from "@tigilabs/types";
 import { useCurrentUser } from "../../hooks/use-current-user";
 import {
@@ -91,7 +92,21 @@ export function CalendarPage() {
 
   async function handleUpdate(eventId: string, payload: CreateEventPayload) {
     try {
-      await updateEventApi(eventId, payload);
+      const {
+        timezone: _timezone,
+        generateMeetingLink: _generateMeetingLink,
+        recurrence: _recurrence,
+        reminders,
+        ...rest
+      } = payload;
+      const updatePayload: UpdateEventPayload = {
+        ...rest,
+        reminders: reminders?.map(({ minutesBefore, channel }) => ({
+          minutesBefore,
+          channel,
+        })),
+      };
+      await updateEventApi(eventId, updatePayload);
       toast({ title: "Evenement mis a jour", variant: "success" });
       setFormState(null);
       setSelectedEvent(null);

@@ -1,7 +1,18 @@
 "use client";
 
 import { createEventSchema, type CreateEventInput } from "@tigilabs/schemas";
-import { AlignLeft, Link2, MapPin, Repeat, Sparkles } from "lucide-react";
+import {
+  AlignLeft,
+  Bell,
+  CalendarClock,
+  Link2,
+  Lock,
+  MapPin,
+  Repeat,
+  Sparkles,
+  Tag,
+  Users,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import type {
@@ -142,155 +153,171 @@ export function EventForm({
       onSubmit={handleSubmit(handleFormSubmit)}
       noValidate
     >
-      <Input
-        label="Titre"
-        placeholder="Reunion preparation deploiement"
-        error={formState.errors.title?.message}
-        {...register("title", { required: "Le titre est obligatoire." })}
-      />
-
-      <label className="field">
-        <span>
-          <AlignLeft size={14} /> Description
-        </span>
-        <textarea
-          rows={4}
-          placeholder="Contexte, ordre du jour..."
-          {...register("description")}
-        />
-      </label>
-
-      <div className="event-form-row">
-        <label className="field-checkbox">
-          <input type="checkbox" {...register("allDay")} />
-          Toute la journee
-        </label>
-      </div>
-
-      <div className="event-form-row">
+      <div className="event-form-section">
         <Input
-          label="Date"
-          type="date"
-          {...register("date", { required: true })}
+          label="Titre"
+          placeholder="Reunion preparation deploiement"
+          error={formState.errors.title?.message}
+          {...register("title", { required: "Le titre est obligatoire." })}
         />
-        {!allDay ? (
-          <>
-            <Input
-              label="Debut"
-              type="time"
-              {...register("startTime", { required: !allDay })}
-            />
-            <Input
-              label="Fin"
-              type="time"
-              {...register("endTime", { required: !allDay })}
-            />
-          </>
-        ) : null}
-      </div>
 
-      <div className="event-form-row">
-        <Input
-          label="Lieu"
-          placeholder="Bureau Tigilabs Douala"
-          {...register("location")}
-        />
         <label className="field">
           <span>
-            <Link2 size={14} /> Lien de visioconference
+            <AlignLeft size={14} /> Description
           </span>
-          <input placeholder="https://..." {...register("meetingUrl")} />
-          <label className="field-checkbox">
-            <input type="checkbox" {...register("generateMeetingLink")} />
-            Generer automatiquement un lien de visioconference
-          </label>
+          <textarea
+            rows={3}
+            placeholder="Contexte, ordre du jour..."
+            {...register("description")}
+          />
         </label>
       </div>
 
-      <label className="field">
-        <span>
-          <MapPin size={14} /> Categorie
+      <div className="event-form-section">
+        <div className="event-form-section-head">
+          <span className="event-form-section-title">
+            <CalendarClock size={13} /> Quand
+          </span>
+          <label className="field-checkbox">
+            <input type="checkbox" {...register("allDay")} />
+            Toute la journee
+          </label>
+        </div>
+
+        <div className="event-form-row">
+          <Input
+            label="Date"
+            type="date"
+            {...register("date", { required: true })}
+          />
+          {!allDay ? (
+            <>
+              <Input
+                label="Debut"
+                type="time"
+                {...register("startTime", { required: !allDay })}
+              />
+              <Input
+                label="Fin"
+                type="time"
+                {...register("endTime", { required: !allDay })}
+              />
+            </>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <MapPin size={13} /> Lieu et visioconference
+        </span>
+        <div className="event-form-row">
+          <Input
+            label="Lieu"
+            placeholder="Bureau Tigilabs Douala"
+            {...register("location")}
+          />
+          <label className="field">
+            <span>
+              <Link2 size={14} /> Lien de visioconference
+            </span>
+            <input placeholder="https://..." {...register("meetingUrl")} />
+          </label>
+        </div>
+        <label className="field-checkbox">
+          <input type="checkbox" {...register("generateMeetingLink")} />
+          Generer automatiquement un lien de visioconference
+        </label>
+      </div>
+
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <Tag size={13} /> Categorie et confidentialite
         </span>
         <CategorySelector
           categories={categories}
           value={watch("categoryId")}
           onChange={(value) => setValue("categoryId", value)}
         />
-      </label>
+        <label className="field">
+          <span>
+            <Lock size={14} /> Confidentialite
+          </span>
+          <select {...register("privacy")}>
+            <option value="NORMAL">Normal</option>
+            <option value="PRIVATE">Prive (les autres voient "Occupe")</option>
+            <option value="RESTRICTED">
+              Restreint (organisateur + participants)
+            </option>
+          </select>
+        </label>
+      </div>
 
-      <label className="field">
-        <span>Confidentialite</span>
-        <select {...register("privacy")}>
-          <option value="NORMAL">Normal</option>
-          <option value="PRIVATE">Prive (les autres voient "Occupe")</option>
-          <option value="RESTRICTED">
-            Restreint (organisateur + participants)
-          </option>
-        </select>
-      </label>
-
-      <label className="field">
-        <span>Participants</span>
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <Users size={13} /> Participants
+        </span>
         <ParticipantPicker
           users={users}
           selectedIds={watch("participantIds")}
           excludeUserId={currentUserId}
           onChange={(ids) => setValue("participantIds", ids)}
         />
-      </label>
+        <SlotSuggestions
+          participantIds={watch("participantIds")}
+          currentUserId={currentUserId}
+          onPick={(slot) => {
+            const start = new Date(slot.startAt);
+            const end = new Date(slot.endAt);
+            setValue("date", start.toISOString().slice(0, 10));
+            setValue("startTime", start.toTimeString().slice(0, 5));
+            setValue("endTime", end.toTimeString().slice(0, 5));
+          }}
+        />
+      </div>
 
-      <SlotSuggestions
-        participantIds={watch("participantIds")}
-        currentUserId={currentUserId}
-        onPick={(slot) => {
-          const start = new Date(slot.startAt);
-          const end = new Date(slot.endAt);
-          setValue("date", start.toISOString().slice(0, 10));
-          setValue("startTime", start.toTimeString().slice(0, 5));
-          setValue("endTime", end.toTimeString().slice(0, 5));
-        }}
-      />
-
-      <label className="field">
-        <span>Rappels</span>
+      <div className="event-form-section">
+        <span className="event-form-section-title">
+          <Bell size={13} /> Rappels
+        </span>
         <ReminderSelector
           value={watch("reminders")}
           onChange={(reminders) => setValue("reminders", reminders)}
         />
-      </label>
+      </div>
 
-      <div className="event-form-row">
+      <div className="event-form-section">
         <label className="field-checkbox">
           <input type="checkbox" {...register("recurrenceEnabled")} />
           <Repeat size={14} /> Evenement recurrent
         </label>
-      </div>
 
-      {recurrenceEnabled ? (
-        <div className="event-form-row">
-          <label className="field">
-            <span>Frequence</span>
-            <select {...register("recurrenceFrequency")}>
-              <option value="DAILY">Tous les jours</option>
-              <option value="WEEKLY">Chaque semaine</option>
-              <option value="BIWEEKLY">Toutes les 2 semaines</option>
-              <option value="MONTHLY">Chaque mois</option>
-              <option value="YEARLY">Chaque annee</option>
-            </select>
-          </label>
-          <Input
-            label="Intervalle"
-            type="number"
-            min={1}
-            {...register("recurrenceInterval", { valueAsNumber: true })}
-          />
-          <Input
-            label="Jusqu'au"
-            type="date"
-            {...register("recurrenceUntil")}
-          />
-        </div>
-      ) : null}
+        {recurrenceEnabled ? (
+          <div className="event-form-row">
+            <label className="field">
+              <span>Frequence</span>
+              <select {...register("recurrenceFrequency")}>
+                <option value="DAILY">Tous les jours</option>
+                <option value="WEEKLY">Chaque semaine</option>
+                <option value="BIWEEKLY">Toutes les 2 semaines</option>
+                <option value="MONTHLY">Chaque mois</option>
+                <option value="YEARLY">Chaque annee</option>
+              </select>
+            </label>
+            <Input
+              label="Intervalle"
+              type="number"
+              min={1}
+              {...register("recurrenceInterval", { valueAsNumber: true })}
+            />
+            <Input
+              label="Jusqu'au"
+              type="date"
+              {...register("recurrenceUntil")}
+            />
+          </div>
+        ) : null}
+      </div>
 
       {formState.errors.root?.message ? (
         <p className="field-error">{formState.errors.root.message}</p>
