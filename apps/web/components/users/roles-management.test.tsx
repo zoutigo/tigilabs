@@ -105,6 +105,54 @@ describe("RolesManagement", () => {
     });
   });
 
+  it("disables a role's checkboxes while a save is in flight, preventing a second toggle from racing and silently reverting the first", async () => {
+    let resolveFirst: ((value: Role) => void) | undefined;
+    apiMocks.setRolePermissions.mockImplementationOnce(
+      () =>
+        new Promise<Role>((resolve) => {
+          resolveFirst = resolve;
+        }),
+    );
+    renderRoles();
+
+    const userCheckbox = screen.getByLabelText(
+      "user.manage pour MANAGER",
+    ) as HTMLInputElement;
+    const roleCheckbox = screen.getByLabelText(
+      "role.manage pour MANAGER",
+    ) as HTMLInputElement;
+
+    fireEvent.click(userCheckbox);
+
+    await waitFor(() =>
+      expect(apiMocks.setRolePermissions).toHaveBeenCalledTimes(1),
+    );
+    expect(roleCheckbox).toBeDisabled();
+
+    fireEvent.click(roleCheckbox);
+    expect(apiMocks.setRolePermissions).toHaveBeenCalledTimes(1);
+
+    resolveFirst?.({
+      ...managerRole,
+      permissions: [{ permission: userManage }],
+    });
+
+    await waitFor(() => expect(roleCheckbox).not.toBeDisabled());
+
+    apiMocks.setRolePermissions.mockResolvedValueOnce({
+      ...managerRole,
+      permissions: [{ permission: userManage }, { permission: roleManage }],
+    });
+    fireEvent.click(roleCheckbox);
+
+    await waitFor(() => {
+      expect(apiMocks.setRolePermissions).toHaveBeenLastCalledWith(
+        "role-manager",
+        expect.arrayContaining(["perm-user-manage", "perm-role-manage"]),
+      );
+    });
+  });
+
   it("creates a new role from the form", async () => {
     const created: Role = { id: "role-new", name: "SUPERVISOR" };
     apiMocks.createRole.mockResolvedValue(created);
