@@ -24,6 +24,9 @@ export function RolesManagement() {
   const { roles: loadedRoles, setRoles } = useRoles();
   const { permissions } = usePermissions();
   const [roles, setLocalRoles] = useState<Role[]>(loadedRoles);
+  const [pendingRoleIds, setPendingRoleIds] = useState<Set<string>>(
+    () => new Set(),
+  );
   const { toast } = useToast();
   const {
     formState: { errors, isSubmitting },
@@ -71,6 +74,10 @@ export function RolesManagement() {
     permissionId: string,
     checked: boolean,
   ) {
+    if (pendingRoleIds.has(role.id)) {
+      return;
+    }
+
     const currentIds = (role.permissions ?? []).map(
       ({ permission }) => permission.id,
     );
@@ -91,6 +98,7 @@ export function RolesManagement() {
           : item,
       ),
     );
+    setPendingRoleIds((prev) => new Set(prev).add(role.id));
 
     try {
       const updated = await setRolePermissions(role.id, nextIds);
@@ -103,6 +111,12 @@ export function RolesManagement() {
         description: error instanceof Error ? error.message : undefined,
         title: "La mise a jour des permissions a echoue.",
         variant: "error",
+      });
+    } finally {
+      setPendingRoleIds((prev) => {
+        const next = new Set(prev);
+        next.delete(role.id);
+        return next;
       });
     }
   }
@@ -150,6 +164,7 @@ export function RolesManagement() {
                         <input
                           aria-label={`${permission.subject}.${permission.action} pour ${role.name}`}
                           checked={checked}
+                          disabled={pendingRoleIds.has(role.id)}
                           onChange={(event) =>
                             handleTogglePermission(
                               role,
