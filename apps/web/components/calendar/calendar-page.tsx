@@ -85,8 +85,15 @@ export function CalendarPage() {
       toast({ title: "Evenement cree", variant: "success" });
       setFormState(null);
       await refetch();
-    } catch {
-      toast({ title: "Creation impossible", variant: "error" });
+    } catch (error) {
+      toast({
+        title: "Creation impossible",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Reessayez dans quelques instants.",
+        variant: "error",
+      });
     }
   }
 
