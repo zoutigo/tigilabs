@@ -2,20 +2,15 @@
 
 import { useEffect, useState } from "react";
 import type { Permission, Role, User } from "@tigilabs/types";
-import {
-  getPermissions,
-  getRoles,
-  getUsers,
-  mockUsers,
-} from "../lib/api/users";
+import { getPermissions, getRoles, getUsers } from "../lib/api/users";
 
 export function useUsers() {
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
 
   useEffect(() => {
     getUsers()
       .then(setUsers)
-      .catch(() => setUsers(mockUsers));
+      .catch(() => setUsers([]));
   }, []);
 
   return { users };

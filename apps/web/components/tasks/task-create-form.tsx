@@ -80,10 +80,12 @@ export function TaskCreateForm({
       toast({ title: "Tache creee.", variant: "success" });
       router.push(`/tasks?group=${values.groupId}`);
       router.refresh();
-    } catch {
+    } catch (error) {
       toast({
         description:
-          "La tache n'a pas pu etre synchronisee, reessayez dans quelques instants.",
+          error instanceof Error
+            ? error.message
+            : "La tache n'a pas pu etre synchronisee, reessayez dans quelques instants.",
         title: "Impossible de creer la tache.",
         variant: "error",
       });

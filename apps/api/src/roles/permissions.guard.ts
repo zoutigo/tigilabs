@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
 @Injectable()
@@ -18,8 +23,16 @@ export class PermissionsGuard implements CanActivate {
     const request = context
       .switchToHttp()
       .getRequest<{ user?: { permissions?: string[] } }>();
-    return permissions.every((permission) =>
-      request.user?.permissions?.includes(permission),
+    const missing = permissions.filter(
+      (permission) => !request.user?.permissions?.includes(permission),
     );
+
+    if (missing.length) {
+      throw new ForbiddenException(
+        `Permission manquante: ${missing.join(", ")}`,
+      );
+    }
+
+    return true;
   }
 }

@@ -123,8 +123,10 @@ describe("TaskCreateForm", () => {
     );
   });
 
-  it("shows an error toast and does not navigate when the API call fails", async () => {
-    apiMocks.createTask.mockRejectedValue(new Error("offline"));
+  it("shows the backend's explicit error message when the API call fails (e.g. missing RBAC permission)", async () => {
+    apiMocks.createTask.mockRejectedValue(
+      new Error("Permission manquante: task.create"),
+    );
 
     renderForm("group-incorporation");
 
@@ -135,6 +137,30 @@ describe("TaskCreateForm", () => {
 
     expect(
       await screen.findByText("Impossible de creer la tache."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText("Permission manquante: task.create"),
+    ).toBeInTheDocument();
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("falls back to a generic description when the API rejects without an Error instance", async () => {
+    apiMocks.createTask.mockRejectedValue("offline");
+
+    renderForm("group-incorporation");
+
+    fireEvent.change(screen.getByPlaceholderText("Deposer le dossier"), {
+      target: { value: "Relire le contrat" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Ajouter la tache" }));
+
+    expect(
+      await screen.findByText("Impossible de creer la tache."),
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "La tache n'a pas pu etre synchronisee, reessayez dans quelques instants.",
+      ),
     ).toBeInTheDocument();
     expect(router.push).not.toHaveBeenCalled();
   });
